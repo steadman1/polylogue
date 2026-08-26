@@ -1,6 +1,10 @@
 # MacOS
 .DS_Store
 
+# Project Specific
+.lock
+.python-version
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
