@@ -1,22 +1,21 @@
 from pathlib import Path
-from mlx_lm import load, generate, stream_generate
 from openai.types import Completion, CompletionChoice
-from collections.abc import Generator
+from collections.abc import AsyncIterator
 from datetime import datetime
-
-from time import sleep
+import asyncio
 
 class TextToTextRunner:
     model = None
     tokenizer = None
 
-    def __init__(self, model_dir: Path) -> None:
-        self.model_dir = model_dir
-        self.model_name = model_dir.parts[-1]
-        self.model, self.tokenizer = self._load(model_dir)
+    def __init__(self, model_path: Path) -> None:
+        self.engine: ModelEngine = TextToTextEngine(model_path)
+        self.model_dir = model_path
+        self.model_name = model_path.parts[-1]
+        self.model, self.tokenizer = self._load(model_path)
 
-    def _load(self, model_dir: Path):
-        return load(str(model_dir))
+    def _load(self, model_path: Path):
+        return self.engine.load(str(model_path))
 
     def destroy(self) -> None:
         self.model = None
@@ -34,9 +33,9 @@ class TextToTextRunner:
         )
 
 
-    def stream_response(self) -> Generator[Completion, None, None]:
+    async def stream_response(self) -> AsyncIterator[Completion]:
         for _ in range(5):
-            sleep(0.1)
+            await asyncio.sleep(1)
 
             timestamp_seconds = int(datetime.now().timestamp())
 

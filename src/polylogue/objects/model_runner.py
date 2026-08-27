@@ -1,14 +1,14 @@
 from pathlib import Path
 from typing import Protocol, runtime_checkable
-from collections.abc import Generator
+from collections.abc import AsyncIterator
 
 # generic response
 @runtime_checkable
 class ModelRunner[SomeResponse](Protocol):
 
-    model_id: Path
+    model_path: Path
 
-    def _load(self, model_dir) -> bool:
+    def _load(self, model_path) -> bool:
         ...
 
     def destroy(self) -> None:
@@ -17,5 +17,5 @@ class ModelRunner[SomeResponse](Protocol):
     def await_response(self) -> SomeResponse:
         ...
 
-    def stream_response(self) -> Generator[SomeResponse, None, None]:
+    def stream_response(self) -> AsyncIterator[SomeResponse]:
         ...
