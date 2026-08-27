@@ -7,3 +7,6 @@ class Endpoint(Enum):
     AUDIO = "audio"
 
     # ...
+
+LLAMA_TARGET = ".gguf"
+MLX_TARGET = "config.json"

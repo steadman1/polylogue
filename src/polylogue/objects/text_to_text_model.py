@@ -1,0 +1,17 @@
+from pathlib import Path
+from typing import Protocol, runtime_checkable
+from collections.abc import AsyncIterator
+
+@runtime_checkable
+class TextToTextModel(Protocol):
+    def load(self):
+        ...
+
+    def destroy(self) -> None:
+        ...
+
+    def generate(self) -> dict[str, str]:
+        ...
+
+    def stream_generate(self) -> AsyncIterator[dict[str, str]]:
+        ...
