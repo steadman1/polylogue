@@ -8,5 +8,5 @@ class Endpoint(Enum):
 
     # ...
 
-LLAMA_TARGET = ".gguf"
+GGUF_TARGET = ".gguf"
 MLX_TARGET = "config.json"

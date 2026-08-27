@@ -1,9 +1,10 @@
 [project]
 name = "polylogue"
 version = "0.1.0"
-description = "Add your description here"
+description = "a REST API, following the OpenAI API schema, that serves self-hosted, open-source ai models of all types"
 readme = "README.md"
 requires-python = ">=3.9"
+pythonpath = ["src"]
 dependencies = [
     "fastapi[standard]>=0.128.8",
     "llama-cpp-python>=0.3.35",

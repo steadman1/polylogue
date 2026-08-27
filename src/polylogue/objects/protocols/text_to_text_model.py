@@ -4,7 +4,7 @@ from collections.abc import AsyncIterator
 
 @runtime_checkable
 class TextToTextModel(Protocol):
-    def load(self):
+    def load(self) -> None:
         ...
 
     def destroy(self) -> None:

@@ -3,7 +3,7 @@ from __future__ import annotations
 from polylogue.build_url import build_url
 from polylogue.fastapi_app import app
 from polylogue.constants import Endpoint
-from polylogue.objects.text_to_text_runner import TextToTextRunner
+from polylogue.objects.text_to_text_engine import TextToTextEngine
 
 from pathlib import Path
 from fastapi.responses import StreamingResponse
@@ -26,9 +26,9 @@ async def create_chat_completion(request: CompletionCreateParams) -> Completion 
     stream = request.get("stream", False)
 
     model_path = Path("/Users/spencersteadman/Models/qwen3.8-27b/Qwen3.8-27B-UD-Q6_K_L.gguf")
-    model_runner = TextToTextRunner(model_path)
+    engine = TextToTextEngine(model_path)
 
     # if stream:
     #     return StreamingResponse(model_runner.stream_response(), media_type="text/plain")
 
-    return model_runner.await_response()
+    return engine.generate()

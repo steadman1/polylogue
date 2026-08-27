@@ -1,6 +1,7 @@
+from collections.abc import Generator
 from pathlib import Path
 from typing import Protocol, runtime_checkable
-from collections.abc import AsyncIterator
+
 
 @runtime_checkable
 class ModelEngine[SomeResponse](Protocol):
@@ -17,5 +18,5 @@ class ModelEngine[SomeResponse](Protocol):
     def generate(self) -> SomeResponse:
         ...
 
-    def stream_generate(self) -> AsyncIterator[SomeResponse]:
+    def stream_generate(self) -> Generator[SomeResponse, None, None]:
         ...
