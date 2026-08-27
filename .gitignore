@@ -2,7 +2,7 @@
 .DS_Store
 
 # Project Specific
-.lock
+*.lock
 .python-version
 
 # Byte-compiled / optimized / DLL files
