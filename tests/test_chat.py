@@ -10,6 +10,7 @@ def test_create_completion_non_streaming() -> None:
     request = {
         "model": "",
         "messages": [],
+        "prompt": "",
         "stream": False
     }
 
@@ -22,6 +23,7 @@ def test_create_completion_streaming() -> None:
     request = {
         "model": "",
         "messages": [],
+        "prompt": "",
         "stream": True
     }
 
@@ -29,3 +31,28 @@ def test_create_completion_streaming() -> None:
 
     assert response.status_code == 200
     assert "text/event-stream" in response.headers["content-type"]
+
+def test_missing_required_parameters_create_completion():
+    requests = [
+        {
+            # "model": "",
+            "messages": [],
+            "prompt": "",
+            "stream": True
+        },
+        {
+            "model": "",
+            # "messages": [],
+            "prompt": "",
+            "stream": True
+        },
+        {
+            "model": "",
+            "messages": [],
+            # "prompt": "",
+            "stream": True
+        },
+    ]
+    for request in requests:
+        response = client.post(build_url(Endpoint.CHAT), json=request)
+        assert response.status_code == 422

@@ -5,6 +5,7 @@ from polylogue.fastapi_app import app
 from polylogue.constants import Endpoint
 from polylogue.objects.text_to_text_engine import TextToTextEngine
 from polylogue.constants import TEST_PROMPT
+from polylogue.functions.get_or_HTTPException import *
 
 from pathlib import Path
 from fastapi.responses import StreamingResponse
@@ -23,7 +24,11 @@ async def list_chat_completions() -> list[ChatCompletion]:
 
 
 @app.post(build_url(Endpoint.CHAT), response_model=None)
-async def create_chat_completion(request: CompletionCreateParams) -> ChatCompletion | StreamingResponse:
+async def create_chat_completion(request: ValidatedCompletionCreateParams) -> ChatCompletion | StreamingResponse:
+    # check required request body parameters are provided
+    model: str = request.get_or_422("model")
+    messages: list[Any] = request.get_or_422("messages")
+    prompt: str = request.get_or_422("prompt")
     stream = request.get("stream", False)
 
     # need some mapping from model names to model paths

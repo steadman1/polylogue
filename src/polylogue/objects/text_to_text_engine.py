@@ -9,7 +9,7 @@ from openai.types.chat import ChatCompletionMessage
 from openai.types.chat.chat_completion import ChatCompletion, Choice
 from openai.types.chat.chat_completion_chunk import ChatCompletionChunk, Choice as ChunkChoice, ChoiceDelta
 
-from polylogue.objects.generator_check_last import generator_check_last
+from polylogue.functions.generator_check_last import generator_check_last
 from polylogue.objects.protocols.text_to_text_model import TextToTextModel
 from polylogue.objects.text_to_text_models.gguf_model import GGUFModel
 from polylogue.objects.text_to_text_models.mlx_model import MLXModel
