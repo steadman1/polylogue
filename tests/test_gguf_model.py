@@ -2,7 +2,7 @@ from pathlib import Path
 from types import GeneratorType
 
 from polylogue.constants import TEST_PROMPT
-from polylogue.objects.text_to_text_models.gguf_model import GGUFModel
+from polylogue.models.text_to_text_models.gguf_model import GGUFModel
 
 
 def test_gguf_model() -> None:

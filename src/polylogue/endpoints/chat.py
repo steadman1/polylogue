@@ -9,8 +9,8 @@ from openai.types.chat.chat_completion import ChatCompletion
 from polylogue.build_url import build_url
 from polylogue.constants import TEST_PROMPT, Endpoint
 from polylogue.fastapi_app import app
-from polylogue.functions.get_or_HTTPException import *
-from polylogue.objects.text_to_text_engine import TextToTextEngine
+from polylogue.helpers.get_or_HTTPException import *
+from polylogue.models.text_to_text_engine import TextToTextEngine
 
 # only want to store completions for 3 (?) days if "store=true"
 

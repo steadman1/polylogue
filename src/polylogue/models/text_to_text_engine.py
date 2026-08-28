@@ -11,10 +11,10 @@ from openai.types.chat.chat_completion_chunk import ChatCompletionChunk, ChoiceD
 from openai.types.chat.chat_completion_chunk import Choice as ChunkChoice
 
 from polylogue.constants import GGUF_TARGET, MLX_TARGET
-from polylogue.functions.generator_check_last import generator_check_last
-from polylogue.objects.protocols.text_to_text_model import TextToTextModel
-from polylogue.objects.text_to_text_models.gguf_model import GGUFModel
-from polylogue.objects.text_to_text_models.mlx_model import MLXModel
+from polylogue.helpers.generator_check_last import generator_check_last
+from polylogue.models.protocols.text_to_text_model import TextToTextModel
+from polylogue.models.text_to_text_models.gguf_model import GGUFModel
+from polylogue.models.text_to_text_models.mlx_model import MLXModel
 
 
 @final
@@ -26,6 +26,9 @@ class TextToTextEngine:
 
         if self.model:
             self.model.load()
+        # raise exception if model cannot be loaded?
+        # else:
+        # raise Exception()
 
     def _choose_model_type(self) -> TextToTextModel | None:
         # need to decide whether to use mlx, llama, ... here based on file type/directory details

@@ -1,7 +1,7 @@
 from pathlib import Path
 from types import GeneratorType
 
-from polylogue.objects.text_to_text_models.mlx_model import MLXModel
+from polylogue.models.text_to_text_models.mlx_model import MLXModel
 
 
 def test_mlx_model() -> None:
