@@ -1,10 +1,14 @@
-from polylogue.objects.text_to_text_models.gguf_model import GGUFModel
 from pathlib import Path
 from types import GeneratorType
+
 from polylogue.constants import TEST_PROMPT
+from polylogue.objects.text_to_text_models.gguf_model import GGUFModel
+
 
 def test_gguf_model() -> None:
-    model_path = Path("/Users/spencersteadman/Models/ornith-1.5-9b/Ornith-1.5-9B-Q4_K_M.gguf")
+    model_path = Path(
+        "/Users/spencersteadman/Models/ornith-1.5-9b/Ornith-1.5-9B-Q4_K_M.gguf"
+    )
     model = GGUFModel(model_path)
 
     model.load()
@@ -14,8 +18,11 @@ def test_gguf_model() -> None:
 
     model.destroy()
 
+
 def test_gguf_model_streaming() -> None:
-    model_path = Path("/Users/spencersteadman/Models/ornith-1.5-9b/Ornith-1.5-9B-Q4_K_M.gguf")
+    model_path = Path(
+        "/Users/spencersteadman/Models/ornith-1.5-9b/Ornith-1.5-9B-Q4_K_M.gguf"
+    )
     model = GGUFModel(model_path)
 
     model.load()

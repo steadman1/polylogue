@@ -1,9 +1,11 @@
 from __future__ import annotations
+
 import os
 
-from polylogue.fastapi_app import app
 # import all of our endpoints to reduce __init__.py file size
-from polylogue.endpoints.chat import list_chat_completions, create_chat_completion
+from polylogue.endpoints.chat import create_chat_completion, list_chat_completions
+from polylogue.fastapi_app import app
+
 
 @app.get("/")
 async def root():

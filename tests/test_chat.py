@@ -6,31 +6,24 @@ from polylogue.fastapi_app import app
 
 client = TestClient(app=app)
 
+
 def test_create_completion_non_streaming() -> None:
-    request = {
-        "model": "",
-        "messages": [],
-        "prompt": "",
-        "stream": False
-    }
+    request = {"model": "", "messages": [], "prompt": "", "stream": False}
 
     response = client.post(build_url(Endpoint.CHAT), json=request)
 
     assert response.status_code == 200
     assert "application/json" in response.headers["content-type"]
 
+
 def test_create_completion_streaming() -> None:
-    request = {
-        "model": "",
-        "messages": [],
-        "prompt": "",
-        "stream": True
-    }
+    request = {"model": "", "messages": [], "prompt": "", "stream": True}
 
     response = client.post(build_url(Endpoint.CHAT), json=request)
 
     assert response.status_code == 200
     assert "text/event-stream" in response.headers["content-type"]
+
 
 def test_missing_required_parameters_create_completion():
     requests = [
@@ -38,19 +31,19 @@ def test_missing_required_parameters_create_completion():
             # "model": "",
             "messages": [],
             "prompt": "",
-            "stream": True
+            "stream": True,
         },
         {
             "model": "",
             # "messages": [],
             "prompt": "",
-            "stream": True
+            "stream": True,
         },
         {
             "model": "",
             "messages": [],
             # "prompt": "",
-            "stream": True
+            "stream": True,
         },
     ]
     for request in requests:

@@ -15,10 +15,10 @@ class GGUFModel:
 
     def load(self) -> None:
         self.model = Llama(
-              model_path=str(self.model_path),
-              # n_gpu_layers=-1, # Uncomment to use GPU acceleration
-              # seed=1337, # Uncomment to set a specific seed
-              # n_ctx=2048, # Uncomment to increase the context window
+            model_path=str(self.model_path),
+            # n_gpu_layers=-1, # Uncomment to use GPU acceleration
+            # seed=1337, # Uncomment to set a specific seed
+            # n_ctx=2048, # Uncomment to increase the context window
         )
 
     def destroy(self) -> None:
@@ -32,9 +32,7 @@ class GGUFModel:
             raise Exception("model is null")
 
         response = self.model.create_completion(
-            prompt=prompt,
-            max_tokens=150,
-            stream=False
+            prompt=prompt, max_tokens=150, stream=False
         )
 
         return response["choices"][0]["text"]
@@ -44,9 +42,7 @@ class GGUFModel:
             raise Exception("model is null")
 
         stream = self.model.create_completion(
-            prompt=prompt,
-            max_tokens=150,
-            stream=True
+            prompt=prompt, max_tokens=150, stream=True
         )
         for chunk in stream:
             yield chunk["choices"][0]["text"]
