@@ -1,6 +1,10 @@
-from mlx_lm import load, generate, stream_generate
+import gc
+from collections.abc import Generator
 from pathlib import Path
-from collections.abc import AsyncIterator
+
+import mlx.core as mlx
+from mlx_lm import generate, load, stream_generate
+
 
 class MLXModel:
     def __init__(self, model_path: Path) -> None:
@@ -13,12 +17,16 @@ class MLXModel:
         self.model, self.tokenizer = load(self.model_path)
 
     def destroy(self) -> None:
-        self.model, self.tokenizer = None, None
+        del self.model
+        del self.tokenizer
+
+        gc.collect()
+        mlx.clear_cache()
 
     def generate(self, prompt: str) -> str:
         return generate(self.model, self.tokenizer, prompt=prompt, verbose=True)
 
-    def stream_generate(self, prompt: str) -> AsyncIterator[str]:
+    def stream_generate(self, prompt: str) -> Generator[str, None, None]:
 
         stream = stream_generate(
             self.model,

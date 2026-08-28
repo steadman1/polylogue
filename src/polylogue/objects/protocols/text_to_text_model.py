@@ -1,6 +1,5 @@
-from pathlib import Path
 from typing import Protocol, runtime_checkable
-from collections.abc import AsyncIterator
+from collections.abc import Generator
 
 @runtime_checkable
 class TextToTextModel(Protocol):
@@ -10,8 +9,8 @@ class TextToTextModel(Protocol):
     def destroy(self) -> None:
         ...
 
-    def generate(self) -> dict[str, str]:
+    def generate(self, prompt: str) -> str:
         ...
 
-    def stream_generate(self) -> AsyncIterator[dict[str, str]]:
+    def stream_generate(self, prompt: str) -> Generator[str, None, None]:
         ...

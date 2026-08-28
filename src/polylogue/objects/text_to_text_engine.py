@@ -9,9 +9,11 @@ from openai.types.chat import ChatCompletionMessage
 from openai.types.chat.chat_completion import ChatCompletion, Choice
 from openai.types.chat.chat_completion_chunk import ChatCompletionChunk, Choice as ChunkChoice, ChoiceDelta
 
+from polylogue.objects.generator_check_last import generator_check_last
 from polylogue.objects.protocols.text_to_text_model import TextToTextModel
-
-# from polylogue.objects.text_to_text_models.gguf_model import GGUFModel
+from polylogue.objects.text_to_text_models.gguf_model import GGUFModel
+from polylogue.objects.text_to_text_models.mlx_model import MLXModel
+from polylogue.constants import MLX_TARGET, GGUF_TARGET
 
 
 @final
@@ -20,30 +22,33 @@ class TextToTextEngine:
     def __init__(self, model_path: Path):
         self.model_path: Path = model_path
         self.model_name: str = model_path.parts[-1]
-        self.model: TextToTextModel | None = self._load()
+        self.model: TextToTextModel | None = self._choose_model_type()
 
-    def _load(self) -> TextToTextModel | None:
+        if self.model:
+            self.model.load()
+
+    def _choose_model_type(self) -> TextToTextModel | None:
         # need to decide whether to use mlx, llama, ... here based on file type/directory details
 
-        # if self.model_path.is_file() and self.model_name.endswith(GGUF_TARGET):
-        #      # *.gguf files are handled by llama cpp
-        #     return MLXModel(self.model_path) # GGUFModel()
+        if self.model_path.is_file() and self.model_name.endswith(GGUF_TARGET):
+             # *.gguf files are handled by llama cpp
+            return GGUFModel(self.model_path)
 
 
-        # if self.model_path.is_dir() and (self.model_path / MLX_TARGET).is_file():
-        #     # mlx should check for a config.json and safetensors in target directory
-        #     return MLXModel(self.model_path)
+        if self.model_path.is_dir() and (self.model_path / MLX_TARGET).is_file():
+            # mlx should check for a config.json and safetensors in target directory
+            return MLXModel(self.model_path)
 
         return None
 
     def destroy(self) -> None:
-        self.engine.destroy()
+        self.model.destroy()
 
 
     # generation should format the raw dictionary into an openai Completion
-    def generate(self, prompt: str) -> Completion:
+    def generate(self, prompt: str) -> ChatCompletion:
         timestamp_seconds = int(datetime.now().timestamp())
-        response = self.engine.generate(prompt)
+        response = self.model.generate(prompt)
 
         choice = Choice(
             finish_reason="stop",
@@ -62,24 +67,27 @@ class TextToTextEngine:
             object="chat.completion"
         )
 
-    def stream_generate(self, prompt: str) -> Generator[ChatCompletionChunk, None, None]:
+    def stream_generate(self, prompt: str) -> Generator[str, None, None]:
         timestamp_seconds = int(datetime.now().timestamp())
-        stream = self.engine.stream_generate(prompt)
+        stream = self.model.stream_generate(prompt)
 
-        for chunk in stream:
+        for is_last, chunk in generator_check_last(stream):
             choice = ChunkChoice(
-                finish_reason="stop",
+                finish_reason="stop" if is_last else None,
                 index=0,
                 delta=ChoiceDelta(
                     content=chunk,
                     role="assistant"
                 )
             )
-
-            yield ChatCompletionChunk(
+            chunk = ChatCompletionChunk(
                 id="0",
                 choices=[choice],
                 created=timestamp_seconds,
                 model=self.model_name,
-                object="chat.completion"
+                object="chat.completion.chunk"
             )
+
+            # Serialize Pydantic chunk to JSON string, formatted for SSE
+            chunk_json = chunk.model_dump_json()
+            yield f"data: {chunk_json}\n\n"

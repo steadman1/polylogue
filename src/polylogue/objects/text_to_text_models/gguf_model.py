@@ -1,8 +1,10 @@
+import gc
+from collections.abc import Generator
+from pathlib import Path
 from typing import final
 
 from llama_cpp import Llama
-from pathlib import Path
-from collections.abc import Generator
+
 
 @final
 class GGUFModel:
@@ -22,6 +24,8 @@ class GGUFModel:
     def destroy(self) -> None:
         self.model.close()
         self.model = None
+
+        gc.collect()
 
     def generate(self, prompt: str) -> str:
         if not self.model:
@@ -45,4 +49,4 @@ class GGUFModel:
             stream=True
         )
         for chunk in stream:
-            return chunk["choices"][0]["text"]
+            yield chunk["choices"][0]["text"]

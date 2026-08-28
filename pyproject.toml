@@ -8,6 +8,7 @@ pythonpath = ["src"]
 dependencies = [
     "fastapi[standard]>=0.128.8",
     "llama-cpp-python>=0.3.35",
+    "mlx>=0.29.3",
     "mlx-lm>=0.29.1",
     "openai",
     "pytest>=8.4.2",

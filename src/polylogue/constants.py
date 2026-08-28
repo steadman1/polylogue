@@ -10,3 +10,5 @@ class Endpoint(Enum):
 
 GGUF_TARGET = ".gguf"
 MLX_TARGET = "config.json"
+
+TEST_PROMPT = "Q: hello, how are you? A: i am doing "
