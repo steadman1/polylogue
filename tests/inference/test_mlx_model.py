@@ -4,7 +4,15 @@ from types import GeneratorType
 import pytest
 
 from polylogue.helpers.get_inference_models_dir import get_inference_models_dir
+from polylogue.inference.protocols.inference_model import InferenceModel
 from polylogue.inference.text_to_text_models.mlx_model import MLXModel
+
+
+def test_mlx_model_conforms() -> None:
+    model_path = Path("path/with/no/model")
+    model = MLXModel(model_path)
+
+    assert isinstance(model, InferenceModel)
 
 
 def test_invalid_mlx_model() -> None:
