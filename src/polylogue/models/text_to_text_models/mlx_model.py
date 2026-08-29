@@ -20,7 +20,7 @@ class MLXModel:
         del self.model
         del self.tokenizer
 
-        gc.collect()
+        _ = gc.collect()
         mlx.clear_cache()
 
     def generate(self, prompt: str) -> str:

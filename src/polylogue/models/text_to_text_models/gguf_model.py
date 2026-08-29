@@ -25,7 +25,7 @@ class GGUFModel:
         self.model.close()
         self.model = None
 
-        gc.collect()
+        _ = gc.collect()
 
     def generate(self, prompt: str) -> str:
         if not self.model:

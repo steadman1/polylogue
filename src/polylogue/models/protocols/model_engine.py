@@ -1,16 +1,15 @@
 from __future__ import annotations
 
 from collections.abc import Generator
-from pathlib import Path
 from typing import Protocol, runtime_checkable
+
+from polylogue.models.protocols.model import Model
 
 
 @runtime_checkable
 class ModelEngine[SomeResponse](Protocol):
-    model_path: Path
-    model_name: str
-
-    def _choose_model_type(self): ...
+    model: Model
+    model_id: str
 
     def destroy(self) -> None: ...
 

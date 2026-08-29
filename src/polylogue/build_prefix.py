@@ -1,5 +1,5 @@
 from polylogue.constants import *
 
 
-def build_url(path: Endpoint) -> str:
+def build_prefix(path: Endpoint) -> str:
     return "/" + API_VERSION + "/" + path.value

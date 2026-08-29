@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from collections.abc import Generator
 from datetime import datetime
-from pathlib import Path
 from typing import final
 
 from openai.types.chat import ChatCompletionMessage
@@ -10,37 +9,19 @@ from openai.types.chat.chat_completion import ChatCompletion, Choice
 from openai.types.chat.chat_completion_chunk import ChatCompletionChunk, ChoiceDelta
 from openai.types.chat.chat_completion_chunk import Choice as ChunkChoice
 
-from polylogue.constants import GGUF_TARGET, MLX_TARGET
 from polylogue.helpers.generator_check_last import generator_check_last
-from polylogue.models.protocols.text_to_text_model import TextToTextModel
-from polylogue.models.text_to_text_models.gguf_model import GGUFModel
-from polylogue.models.text_to_text_models.mlx_model import MLXModel
+from polylogue.models.protocols.model import Model
 
 
 @final
 class TextToTextEngine:
-    def __init__(self, model_path: Path):
-        self.model_path: Path = model_path
-        self.model_name: str = model_path.parts[-1]
-        self.model: TextToTextModel | None = self._choose_model_type()
+    def __init__(self, model: Model, model_id: str):
+        # to support dependecy injection, we need to take in an object
+        # that will handle choosing the model
+        self.model: Model = model
+        self.model_id: str = model_id
 
-        if self.model:
-            self.model.load()
-        # raise exception if model cannot be loaded?
-        # else:
-        # raise Exception()
-
-    def _choose_model_type(self) -> TextToTextModel | None:
-        # need to decide whether to use mlx, llama, ... here based on file type/directory details
-        if self.model_path.is_file() and self.model_name.endswith(GGUF_TARGET):
-            # *.gguf files are handled by llama cpp
-            return GGUFModel(self.model_path)
-
-        if self.model_path.is_dir() and (self.model_path / MLX_TARGET).is_file():
-            # mlx should check for a config.json and safetensors in target directory
-            return MLXModel(self.model_path)
-
-        return None
+        self.model.load()
 
     def destroy(self) -> None:
         self.model.destroy()
@@ -60,7 +41,7 @@ class TextToTextEngine:
             id="0",
             choices=[choice],
             created=timestamp_seconds,
-            model=self.model_name,
+            model=self.model_id,
             object="chat.completion",
         )
 
@@ -78,7 +59,7 @@ class TextToTextEngine:
                 id="0",
                 choices=[choice],
                 created=timestamp_seconds,
-                model=self.model_name,
+                model=self.model_id,
                 object="chat.completion.chunk",
             )
 

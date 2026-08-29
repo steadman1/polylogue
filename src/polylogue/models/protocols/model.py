@@ -3,7 +3,7 @@ from typing import Protocol, runtime_checkable
 
 
 @runtime_checkable
-class TextToTextModel(Protocol):
+class Model(Protocol):
     def load(self) -> None: ...
 
     def destroy(self) -> None: ...
