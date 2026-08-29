@@ -32,7 +32,6 @@ class TextToTextEngine:
 
     def _choose_model_type(self) -> TextToTextModel | None:
         # need to decide whether to use mlx, llama, ... here based on file type/directory details
-
         if self.model_path.is_file() and self.model_name.endswith(GGUF_TARGET):
             # *.gguf files are handled by llama cpp
             return GGUFModel(self.model_path)
