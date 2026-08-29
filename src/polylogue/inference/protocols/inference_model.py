@@ -3,7 +3,7 @@ from typing import Protocol, runtime_checkable
 
 
 @runtime_checkable
-class Model(Protocol):
+class InferenceModel(Protocol):
     def load(self) -> None: ...
 
     def destroy(self) -> None: ...

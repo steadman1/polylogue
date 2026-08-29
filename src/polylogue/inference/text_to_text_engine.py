@@ -10,15 +10,15 @@ from openai.types.chat.chat_completion_chunk import ChatCompletionChunk, ChoiceD
 from openai.types.chat.chat_completion_chunk import Choice as ChunkChoice
 
 from polylogue.helpers.generator_check_last import generator_check_last
-from polylogue.models.protocols.model import Model
+from polylogue.inference.protocols.inference_model import InferenceModel
 
 
 @final
 class TextToTextEngine:
-    def __init__(self, model: Model, model_id: str):
+    def __init__(self, model: InferenceModel, model_id: str):
         # to support dependecy injection, we need to take in an object
         # that will handle choosing the model
-        self.model: Model = model
+        self.model: InferenceModel = model
         self.model_id: str = model_id
 
         self.model.load()

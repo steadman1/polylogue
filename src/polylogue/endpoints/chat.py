@@ -9,9 +9,9 @@ from polylogue.build_prefix import build_prefix
 from polylogue.constants import TEST_PROMPT, Endpoint
 from polylogue.fastapi_app import app
 from polylogue.helpers.get_or_HTTPException import *
-from polylogue.models.protocols.model import Model
-from polylogue.models.text_to_text_engine import TextToTextEngine
-from polylogue.models.text_to_text_factory import TextToTextFactory
+from polylogue.inference.protocols.inference_model import InferenceModel
+from polylogue.inference.text_to_text_engine import TextToTextEngine
+from polylogue.inference.text_to_text_factory import TextToTextFactory
 
 # only want to store completions for 3 (?) days if "store=true"
 
@@ -29,14 +29,14 @@ async def create_chat_completion(
     request: ValidatedCompletionCreateParams,
 ) -> ChatCompletion | StreamingResponse:
     # check required request body parameters are provided
-    model: str = request.get_or_422("model")
+    model_id: str = request.get_or_422("model")
     messages: list[Any] = request.get_or_422("messages")
     prompt: str = request.get_or_422("prompt")
     stream = request.get("stream", False)
 
     # need some mapping from model names to model paths
     model_path = Path("/Users/spencersteadman/Models/lil-bard/")
-    model: Model = TextToTextFactory.from_path(model_path)
+    model: InferenceModel = TextToTextFactory.from_path(model_path)
     engine: TextToTextEngine = TextToTextEngine(model, model_path.parts[-1])
 
     if stream:

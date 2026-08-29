@@ -3,12 +3,12 @@ from __future__ import annotations
 from collections.abc import Generator
 from typing import Protocol, runtime_checkable
 
-from polylogue.models.protocols.model import Model
+from polylogue.inference.protocols.inference_model import InferenceModel
 
 
 @runtime_checkable
 class ModelEngine[SomeResponse](Protocol):
-    model: Model
+    model: InferenceModel
     model_id: str
 
     def destroy(self) -> None: ...

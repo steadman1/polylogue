@@ -22,6 +22,9 @@ class GGUFModel:
         )
 
     def destroy(self) -> None:
+        if not self.model:
+            return
+
         self.model.close()
         self.model = None
 

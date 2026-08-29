@@ -26,3 +26,8 @@ ignore = ["I001"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
+# skip tests marked with @pytest.mark.slow by default
+addopts = "-m 'not slow'"
+markers = [
+    "slow: marks tests as slow (deselected by default)",
+]

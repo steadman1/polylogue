@@ -1,14 +1,14 @@
 from pathlib import Path
 
 from polylogue.constants import GGUF_TARGET, MLX_TARGET
-from polylogue.models.protocols.model import Model
-from polylogue.models.text_to_text_models.gguf_model import GGUFModel
-from polylogue.models.text_to_text_models.mlx_model import MLXModel
+from polylogue.inference.protocols.inference_model import InferenceModel
+from polylogue.inference.text_to_text_models.gguf_model import GGUFModel
+from polylogue.inference.text_to_text_models.mlx_model import MLXModel
 
 
 class TextToTextFactory:
     @staticmethod
-    def from_path(model_path: Path) -> Model:
+    def from_path(model_path: Path) -> InferenceModel:
         model_name: str = model_path.parts[-1]
         # need to decide whether to use mlx, llama, ... here based on file type/directory details
         if model_path.is_file() and model_name.endswith(GGUF_TARGET):

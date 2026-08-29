@@ -27,7 +27,6 @@ class MLXModel:
         return generate(self.model, self.tokenizer, prompt=prompt, verbose=True)
 
     def stream_generate(self, prompt: str) -> Generator[str, None, None]:
-
         stream = stream_generate(self.model, self.tokenizer, prompt, max_tokens=512)
         for chunk in stream:
             yield chunk.text
