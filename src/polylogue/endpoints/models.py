@@ -1,22 +1,18 @@
 from __future__ import annotations
 
-from fastapi import APIRouter
 from openai.types import Model
+
 from polylogue.build_prefix import build_prefix
-
 from polylogue.constants import Endpoint
-
-router = APIRouter(prefix=build_prefix(Endpoint.MODELS))
+from polylogue.fastapi_app import app
 
 
 # need redis hooked up to query model
-@router.get("")
+@app.get(build_prefix(Endpoint.MODELS))
 async def list_models() -> list[Model]:
     return []
 
 
-@router.get("/{model}")
+@app.get(build_prefix(Endpoint.MODELS) + "/{model}")
 async def get_model(model: str) -> Model:
-    model: str = request.get_or_422("model")
-
     raise Exception("unimplemented")
