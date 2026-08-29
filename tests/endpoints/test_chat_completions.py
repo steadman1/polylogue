@@ -1,10 +1,17 @@
 from fastapi.testclient import TestClient
 
-from polylogue.build_prefix import build_prefix
 from polylogue.constants import Endpoint
 from polylogue.fastapi_app import app
+from polylogue.helpers.build_prefix import build_prefix
 
 client = TestClient(app=app)
+
+
+def test_list_completions() -> None:
+    response = client.get(build_prefix(Endpoint.CHAT))
+
+    assert response.status_code == 200
+    assert "application/json" in response.headers["content-type"]
 
 
 def test_create_completion_non_streaming() -> None:
@@ -27,6 +34,7 @@ def test_create_completion_streaming() -> None:
 
 def test_missing_required_parameters_create_completion():
     requests = [
+        {},
         {
             # "model": "",
             "messages": [],

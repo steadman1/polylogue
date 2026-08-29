@@ -5,9 +5,9 @@ from pathlib import Path
 from fastapi.responses import StreamingResponse
 from openai.types.chat.chat_completion import ChatCompletion
 
-from polylogue.build_prefix import build_prefix
 from polylogue.constants import TEST_PROMPT, Endpoint
 from polylogue.fastapi_app import app
+from polylogue.helpers.build_prefix import build_prefix
 from polylogue.helpers.get_or_HTTPException import *
 from polylogue.inference.protocols.inference_model import InferenceModel
 from polylogue.inference.text_to_text_engine import TextToTextEngine
