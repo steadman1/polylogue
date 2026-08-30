@@ -2,7 +2,7 @@
 
 a REST API, following the OpenAI API schema, that serves self-hosted, open-source ai models of all types
 
-## Getting Started
+## Running the API
 
 pre-req: this project depends on mlx, so to run 
 
@@ -18,6 +18,42 @@ echo 'MLX_MODEL_PATH="path/to/mlx/model"' >> ~/.zshrc && source ~/.zshrc
 4. run the server locally with fastapi and redis
     - start your redis instance `redis-server`
     - then, start the fastapi instance in another terminal `uv run fastapi dev src/polylogue/__init__.py`
+
+## Adding ModelRecords to Redis from the CLI
+
+### Get a ModelRecord
+
+```bash
+uv run polylogue-cli get -m model_id
+```
+
+### Save a ModelRecord
+
+```bash
+uv run polylogue-cli save -m model_id -p /path/to/model
+```
+
+### List all ModelRecords
+
+```bash
+uv run polylogue-cli list
+```
+
+### Delete a ModelRecord
+
+```bash
+uv run polylogue-cli delete -m model_id
+```
+
+### Help
+
+```bash
+uv run polylogue-cli --help
+```
+
+## Known Issues
+
+sometimes `uv run` will throw `ModuleNotFoundError: No module named 'polylogue'`. running `rm -rf .venv uv.lock && uv sync` should resolve it
 
 ## TODO / Current Plan
 
