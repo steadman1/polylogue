@@ -4,7 +4,15 @@ from types import GeneratorType
 import pytest
 
 from polylogue.constants import GGUF_MODEL_PATH, TEST_PROMPT
+from polylogue.inference.protocols.inference_model import InferenceModel
 from polylogue.inference.text_to_text_models.gguf_model import GGUFModel
+
+
+def test_conforms_protocol_gguf_model() -> None:
+    model_path = Path("path/with/no/model")
+    model = GGUFModel(model_path)
+
+    assert isinstance(model, InferenceModel)
 
 
 def test_invalid_gguf_model() -> None:

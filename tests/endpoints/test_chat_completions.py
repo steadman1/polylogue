@@ -18,6 +18,7 @@ def test_create_completion_non_streaming(client: TestClient) -> None:
 
     assert response.status_code == 200
     assert "application/json" in response.headers["content-type"]
+    assert "assistant" in str(response.content)
 
 
 def test_create_completion_streaming(client: TestClient) -> None:
@@ -27,6 +28,7 @@ def test_create_completion_streaming(client: TestClient) -> None:
 
     assert response.status_code == 200
     assert "text/event-stream" in response.headers["content-type"]
+    assert "assistant" in str(response.content)
 
 
 def test_missing_required_parameters_create_completion(client: TestClient):

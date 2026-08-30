@@ -20,17 +20,13 @@ def test_throws_TextToTextFactory() -> None:
 
 def test_gguf_TextToTextFactory() -> None:
     # known gguf model path
-    gguf_path = GGUF_MODEL_PATH
-
-    model = TextToTextFactory.from_path(gguf_path)
+    model = TextToTextFactory.from_path(GGUF_MODEL_PATH)
 
     assert isinstance(model, GGUFModel)
 
 
 def test_mlx_TextToTextFactory() -> None:
     # known mlx model path
-    mlx_path = MLX_MODEL_PATH
-
-    model = TextToTextFactory.from_path(mlx_path)
+    model = TextToTextFactory.from_path(MLX_MODEL_PATH)
 
     assert isinstance(model, MLXModel)

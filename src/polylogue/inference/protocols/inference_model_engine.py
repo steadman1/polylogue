@@ -7,7 +7,7 @@ from polylogue.inference.protocols.inference_model import InferenceModel
 
 
 @runtime_checkable
-class ModelEngine[SomeResponse](Protocol):
+class InferenceModelEngine[SomeResponse](Protocol):
     model: InferenceModel
     model_id: str
 

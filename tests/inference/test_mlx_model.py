@@ -4,10 +4,9 @@ from types import GeneratorType
 import pytest
 
 from polylogue.constants import MLX_MODEL_PATH
+from polylogue.helpers.can_run_mlx_lm import can_run_mlx_lm
 from polylogue.inference.protocols.inference_model import InferenceModel
 from polylogue.inference.text_to_text_models.mlx_model import MLXModel
-
-from polylogue.helpers.can_run_mlx_lm import can_run_mlx_lm
 
 if not can_run_mlx_lm():
     pytest.skip(
@@ -15,7 +14,8 @@ if not can_run_mlx_lm():
         allow_module_level=True,
     )
 
-def test_mlx_model_conforms() -> None:
+
+def test_conforms_protocol_mlx_model() -> None:
     model_path = Path("path/with/no/model")
     model = MLXModel(model_path)
 
