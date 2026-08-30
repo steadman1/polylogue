@@ -14,10 +14,22 @@ echo 'GGUF_MODEL_PATH="path/to/gguf/model.gguf"' >> ~/.zshrc && source ~/.zshrc 
 echo 'MLX_MODEL_PATH="path/to/mlx/model"' >> ~/.zshrc && source ~/.zshrc
 ```
 
-3. run the unit tests with pytest `uv run pytest`
-4. run the server locally with fastapi and redis
-    - start your redis instance `redis-server`
-    - then, start the fastapi instance in another terminal `uv run fastapi dev src/polylogue/__init__.py`
+3. run the server locally with fastapi and redis
+    - start your redis instance 
+    - then, start the fastapi instance in another terminal
+
+```bash
+redis-server
+uv run fastapi dev src/polylogue/__init__.py
+```
+
+## Running Unit Tests with pytest
+
+unit tests cover fastapi endpoints and inference components
+
+```bash
+uv run pytest
+```
 
 ## Adding ModelRecords to Redis from the CLI
 
