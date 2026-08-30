@@ -1,20 +1,17 @@
 from fastapi.testclient import TestClient
 
-from polylogue.constants import Endpoint
-from polylogue.fastapi_app import app
+from polylogue.constants import MOCK_MODEL_ID, Endpoint
 from polylogue.helpers.build_prefix import build_prefix
 
-client = TestClient(app=app)
 
-
-def test_list_models() -> None:
+def test_list_models(client: TestClient) -> None:
     response = client.get(build_prefix(Endpoint.MODELS))
 
     assert response.status_code == 200
 
 
-def test_get_model() -> None:
-    url = build_prefix(Endpoint.MODELS) + "/some_model"
+def test_get_model(client: TestClient) -> None:
+    url = build_prefix(Endpoint.MODELS) + "/" + MOCK_MODEL_ID
     response = client.get(url)
 
     assert response.status_code == 200

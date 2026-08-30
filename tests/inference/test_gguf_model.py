@@ -3,8 +3,7 @@ from types import GeneratorType
 
 import pytest
 
-from polylogue.constants import TEST_PROMPT
-from polylogue.helpers.get_inference_models_dir import get_inference_models_dir
+from polylogue.constants import GGUF_MODEL_PATH, TEST_PROMPT
 from polylogue.inference.text_to_text_models.gguf_model import GGUFModel
 
 
@@ -18,7 +17,7 @@ def test_invalid_gguf_model() -> None:
 
 @pytest.mark.slow
 def test_gguf_model() -> None:
-    model_path = get_inference_models_dir() / "ornith-1.5-9b/Ornith-1.5-9B-Q4_K_M.gguf"
+    model_path = GGUF_MODEL_PATH
     model = GGUFModel(model_path)
 
     model.load()
@@ -33,7 +32,7 @@ def test_gguf_model() -> None:
 
 @pytest.mark.slow
 def test_gguf_model_streaming() -> None:
-    model_path = get_inference_models_dir() / "ornith-1.5-9b/Ornith-1.5-9B-Q4_K_M.gguf"
+    model_path = GGUF_MODEL_PATH
     model = GGUFModel(model_path)
 
     model.load()

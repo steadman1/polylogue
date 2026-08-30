@@ -1,7 +1,7 @@
 from collections.abc import Generator
 
 
-class TestInferenceModel:
+class MockInferenceModel:
     def load(self) -> None:
         return
 
@@ -10,7 +10,7 @@ class TestInferenceModel:
 
     def generate(self, prompt: str) -> str:
         _ = prompt
-        return "test response"
+        return "test non-streaming response"
 
     def stream_generate(self, prompt: str) -> Generator[str, None, None]:
         _ = prompt

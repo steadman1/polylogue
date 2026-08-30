@@ -3,7 +3,7 @@ name = "polylogue"
 version = "0.1.0"
 description = "a REST API, following the OpenAI API schema, that serves self-hosted, open-source ai models of all types"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.12"
 pythonpath = ["src"]
 dependencies = [
     "fastapi[standard]>=0.128.8",
@@ -12,14 +12,15 @@ dependencies = [
     "mlx-lm>=0.29.1",
     "openai",
     "pytest>=8.4.2",
+    "redis>=7.0.1",
 ]
 
 [project.scripts]
 polylogue = "polylogue:main"
 
 [build-system]
-requires = ["uv_build>=0.12.5,<0.13.0"]
-build-backend = "uv_build"
+requires = ["uv_build>=0.12.5,<0.13.0", "hatchling"]
+build-backend = "hatchling.build"
 
 [tool.ruff.lint]
 ignore = ["I001"]

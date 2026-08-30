@@ -1,21 +1,18 @@
 from fastapi.testclient import TestClient
 
-from polylogue.constants import Endpoint
-from polylogue.fastapi_app import app
+from polylogue.constants import MOCK_MODEL_ID, Endpoint
 from polylogue.helpers.build_prefix import build_prefix
 
-client = TestClient(app=app)
 
-
-def test_list_completions() -> None:
+def test_list_completions(client: TestClient) -> None:
     response = client.get(build_prefix(Endpoint.CHAT))
 
     assert response.status_code == 200
     assert "application/json" in response.headers["content-type"]
 
 
-def test_create_completion_non_streaming() -> None:
-    request = {"model": "", "messages": [], "prompt": "", "stream": False}
+def test_create_completion_non_streaming(client: TestClient) -> None:
+    request = {"model": MOCK_MODEL_ID, "messages": [], "prompt": "", "stream": False}
 
     response = client.post(build_prefix(Endpoint.CHAT), json=request)
 
@@ -23,8 +20,8 @@ def test_create_completion_non_streaming() -> None:
     assert "application/json" in response.headers["content-type"]
 
 
-def test_create_completion_streaming() -> None:
-    request = {"model": "", "messages": [], "prompt": "", "stream": True}
+def test_create_completion_streaming(client: TestClient) -> None:
+    request = {"model": MOCK_MODEL_ID, "messages": [], "prompt": "", "stream": True}
 
     response = client.post(build_prefix(Endpoint.CHAT), json=request)
 
@@ -32,7 +29,7 @@ def test_create_completion_streaming() -> None:
     assert "text/event-stream" in response.headers["content-type"]
 
 
-def test_missing_required_parameters_create_completion():
+def test_missing_required_parameters_create_completion(client: TestClient):
     requests = [
         {},
         {

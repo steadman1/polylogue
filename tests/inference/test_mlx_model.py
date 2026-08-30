@@ -3,7 +3,7 @@ from types import GeneratorType
 
 import pytest
 
-from polylogue.helpers.get_inference_models_dir import get_inference_models_dir
+from polylogue.constants import MLX_MODEL_PATH
 from polylogue.inference.protocols.inference_model import InferenceModel
 from polylogue.inference.text_to_text_models.mlx_model import MLXModel
 
@@ -25,7 +25,7 @@ def test_invalid_mlx_model() -> None:
 
 @pytest.mark.slow
 def test_mlx_model() -> None:
-    model_path = get_inference_models_dir() / "lil-bard"
+    model_path = MLX_MODEL_PATH
     model = MLXModel(model_path)
 
     model.load()
@@ -41,7 +41,7 @@ def test_mlx_model() -> None:
 
 @pytest.mark.slow
 def test_mlx_model_streaming() -> None:
-    model_path = get_inference_models_dir() / "lil-bard"
+    model_path = MLX_MODEL_PATH
     model = MLXModel(model_path)
 
     model.load()

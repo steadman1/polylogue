@@ -6,12 +6,12 @@ from types import GeneratorType
 from openai.types.chat.chat_completion import ChatCompletion
 from openai.types.chat.chat_completion_chunk import ChatCompletionChunk
 
-from polylogue.dependency_injection.test_inference_model import TestInferenceModel
+from polylogue.dependency_injection.mock_inference_model import MockInferenceModel
 from polylogue.inference.text_to_text_engine import TextToTextEngine
 
 
 def test_TextToTextEngine() -> None:
-    model = TestInferenceModel()
+    model = MockInferenceModel()
     model_id = "test_model"
     engine = TextToTextEngine(model, model_id)
 
@@ -23,7 +23,7 @@ def test_TextToTextEngine() -> None:
 
 
 def test_TextToTextEngine_streaming() -> None:
-    model = TestInferenceModel()
+    model = MockInferenceModel()
     model_id = "test_model"
     engine = TextToTextEngine(model, model_id)
 

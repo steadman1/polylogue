@@ -2,7 +2,7 @@ from pathlib import Path
 
 from pytest import raises
 
-from polylogue.helpers.get_inference_models_dir import get_inference_models_dir
+from polylogue.constants import GGUF_MODEL_PATH, MLX_MODEL_PATH
 from polylogue.inference.text_to_text_factory import (
     ModelResolutionError,
     TextToTextFactory,
@@ -20,7 +20,7 @@ def test_throws_TextToTextFactory() -> None:
 
 def test_gguf_TextToTextFactory() -> None:
     # known gguf model path
-    gguf_path = get_inference_models_dir() / "ornith-1.5-9b/Ornith-1.5-9B-Q4_K_M.gguf"
+    gguf_path = GGUF_MODEL_PATH
 
     model = TextToTextFactory.from_path(gguf_path)
 
@@ -29,7 +29,7 @@ def test_gguf_TextToTextFactory() -> None:
 
 def test_mlx_TextToTextFactory() -> None:
     # known mlx model path
-    mlx_path = get_inference_models_dir() / "lil-bard"
+    mlx_path = MLX_MODEL_PATH
 
     model = TextToTextFactory.from_path(mlx_path)
 
