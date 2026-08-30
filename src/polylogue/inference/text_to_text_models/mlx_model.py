@@ -5,9 +5,16 @@ from pathlib import Path
 import mlx.core as mlx
 from mlx_lm import generate, load, stream_generate
 
+from polylogue.helpers.can_run_mlx_lm import can_run_mlx_lm
+
+class HardwardUnsupportedError(Exception):
+    pass
 
 class MLXModel:
     def __init__(self, model_path: Path) -> None:
+        if not can_run_mlx_lm():
+            raise HardwardUnsupportedError("Host machine cannot run mlx models")
+
         self.model_path = model_path
 
         self.model = None

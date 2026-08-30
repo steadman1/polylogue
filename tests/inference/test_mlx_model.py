@@ -7,6 +7,13 @@ from polylogue.constants import MLX_MODEL_PATH
 from polylogue.inference.protocols.inference_model import InferenceModel
 from polylogue.inference.text_to_text_models.mlx_model import MLXModel
 
+from polylogue.helpers.can_run_mlx_lm import can_run_mlx_lm
+
+if not can_run_mlx_lm():
+    pytest.skip(
+        "Skipping MLX tests: Apple Silicon macOS required.",
+        allow_module_level=True,
+    )
 
 def test_mlx_model_conforms() -> None:
     model_path = Path("path/with/no/model")
