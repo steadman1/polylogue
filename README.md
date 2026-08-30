@@ -7,25 +7,18 @@ a REST API, following the OpenAI API schema, that serves self-hosted, open-sourc
 pre-req: this project depends on mlx, so to run 
 
 1. install `uv` on your machine and make sures it's all setup
-
-2. add environment variables for known model paths. these can be empty/mock values but this might cause some tests to fail. you'll need to add the env vars to your .zshrc, .bashrc, etc.
+2. install `redis` as well
+3. add environment variables for known model paths. these can be empty/mock values but this might cause some tests to fail. you'll need to add the env vars to your .zshrc, .bashrc, etc.
 
 ```
 echo 'GGUF_MODEL_PATH="path/to/gguf/model.gguf"' >> ~/.zshrc && source ~/.zshrc # or .bashrc if that's what your machine uses
 echo 'MLX_MODEL_PATH="path/to/mlx/model"' >> ~/.zshrc && source ~/.zshrc
 ```
 
-3. to run unit tests with pytest
-
-```
-uv run pytest
-```
-
-4. to run the server locally with fastapi
-
-```
-uv run fastapi dev src/polylogue/__init__.py
-```
+4. to run unit tests with pytest `uv run pytest`
+5. to run the server locally with fastapi and redis
+    - start your redis instance `redis-server`
+    - then, start the fastapi instance `uv run fastapi dev src/polylogue/__init__.py`
 
 ## TODO / Current Plan
 
