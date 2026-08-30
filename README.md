@@ -18,7 +18,7 @@ echo 'MLX_MODEL_PATH="path/to/mlx/model"' >> ~/.zshrc && source ~/.zshrc
 4. to run unit tests with pytest `uv run pytest`
 5. to run the server locally with fastapi and redis
     - start your redis instance `redis-server`
-    - then, start the fastapi instance `uv run fastapi dev src/polylogue/__init__.py`
+    - then, start the fastapi instance in another terminal `uv run fastapi dev src/polylogue/__init__.py`
 
 ## TODO / Current Plan
 
