@@ -7,4 +7,4 @@ from openai.types import Model
 
 class ModelRecord(Model):
     path: Path
-    description: str | None = None
+    description: str | None = None  # might want to axe this later

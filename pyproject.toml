@@ -30,6 +30,9 @@ ignore = ["I001"]
 [tool.hatch.build.targets.wheel]
 packages = ["src/polylogue"]
 
+[tool.uv]
+package = true
+
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 # skip tests marked with @pytest.mark.slow by default
