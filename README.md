@@ -51,7 +51,7 @@ uv run polylogue-cli delete -m model_id
 uv run polylogue-cli --help
 ```
 
-## Known Issues
+## Known Issues & Fixes
 
 sometimes `uv run` will throw `ModuleNotFoundError: No module named 'polylogue'`. running `rm -rf .venv uv.lock && uv sync` should resolve it
 
