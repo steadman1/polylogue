@@ -1,9 +1,9 @@
 from __future__ import annotations
 
+from polylogue.clients import DBClient, app
 from polylogue.constants import Endpoint
 from polylogue.db.model_record import ModelRecord
 from polylogue.db.model_record_manager import ModelRecordManager
-from polylogue.fastapi_app import DBClient, app
 from polylogue.helpers.build_prefix import build_prefix
 
 

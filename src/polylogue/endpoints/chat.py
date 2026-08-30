@@ -3,10 +3,10 @@ from __future__ import annotations
 from fastapi.responses import StreamingResponse
 from openai.types.chat.chat_completion import ChatCompletion
 
-from polylogue.constants import TEST_PROMPT, Endpoint
+from polylogue.clients import DBClient, app
+from polylogue.constants import Endpoint
 from polylogue.db.model_record import ModelRecord
 from polylogue.db.model_record_manager import ModelRecordManager
-from polylogue.fastapi_app import DBClient, app
 from polylogue.helpers.build_prefix import build_prefix
 from polylogue.helpers.get_or_HTTPException import *
 from polylogue.inference.protocols.inference_model import InferenceModel

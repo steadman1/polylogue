@@ -5,10 +5,10 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
+from polylogue.clients import app, get_db
 from polylogue.constants import DB_MODELS_NAMESPACE, MLX_MODEL_PATH, MOCK_MODEL_ID
 from polylogue.db.model_record import ModelRecord
 from polylogue.dependency_injection.mock_db import MockDB
-from polylogue.fastapi_app import app, get_db
 
 
 @pytest.fixture

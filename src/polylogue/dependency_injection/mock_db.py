@@ -26,8 +26,8 @@ class MockDB[T]:
             return 1
         return 0
 
-    async def hgetall(self, key: str) -> Sequence[T]:
-        return list(self.store.get(key, {}).values())
+    async def hgetall(self, key: str) -> dict[str, T]:
+        return self.store.get(key, {})
 
     # Synchronous helper for populating data in pytest fixtures without event loop
     def seed(self, key: str, field: str, value: T) -> None:

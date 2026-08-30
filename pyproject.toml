@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.12"
 pythonpath = ["src"]
 dependencies = [
+    "click>=8.4.2",
     "fastapi[standard]>=0.128.8",
     "llama-cpp-python>=0.3.35",
     "mlx>=0.29.3",
@@ -17,6 +18,7 @@ dependencies = [
 
 [project.scripts]
 polylogue = "polylogue:main"
+polylogue-cli = "polylogue.cli:cli"
 
 [build-system]
 requires = ["uv_build>=0.12.5,<0.13.0", "hatchling"]
@@ -24,6 +26,9 @@ build-backend = "hatchling.build"
 
 [tool.ruff.lint]
 ignore = ["I001"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/polylogue"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]

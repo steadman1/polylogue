@@ -23,14 +23,13 @@ class ModelRecordManager:
         return ModelRecord.model_validate_json(json_data)
 
     async def list_all(self) -> Sequence[ModelRecord]:
-        json_data_sequence = await self.client.hgetall(self.namespace)
-
-        if not json_data_sequence:
+        json_data_mapping = await self.client.hgetall(self.namespace)
+        if not json_data_mapping:
             return []
 
         return [
             ModelRecord.model_validate_json(json_data_single)
-            for json_data_single in json_data_sequence
+            for json_data_single in json_data_mapping.values()
         ]
 
     async def save(self, record: ModelRecord) -> None:
