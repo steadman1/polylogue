@@ -32,7 +32,7 @@ class GGUFModel:
 
     def generate(self, prompt: str) -> str:
         if not self.model:
-            raise Exception("model is null")
+            raise ValueError("model is null")
 
         response = self.model.create_completion(
             prompt=prompt, max_tokens=150, stream=False
@@ -42,7 +42,7 @@ class GGUFModel:
 
     def stream_generate(self, prompt: str) -> Generator[str, None, None]:
         if not self.model:
-            raise Exception("model is null")
+            raise ValueError("model is null")
 
         stream = self.model.create_completion(
             prompt=prompt, max_tokens=150, stream=True
