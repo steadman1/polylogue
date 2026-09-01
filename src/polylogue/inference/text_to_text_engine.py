@@ -31,7 +31,7 @@ class TextToTextEngine:
         self, messages: list[dict[str, str | list[dict[str, str]]]]
     ) -> list[ChatCompletionMessageParam]:
 
-        return list(MessageList(messages).clean())
+        return MessageList(messages).clean()
 
     # generation should format the raw dictionary into an openai Completion
     def generate(

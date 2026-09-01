@@ -9,6 +9,7 @@ from openai.types.chat import (
     ChatCompletionSystemMessageParam,
     ChatCompletionUserMessageParam,
 )
+
 from polylogue.inference.helpers.flatten_chat_messages import flatten_chat_messages
 
 
@@ -16,7 +17,7 @@ from polylogue.inference.helpers.flatten_chat_messages import flatten_chat_messa
 class MessageList(UserList[Any]):
     """A list container for chat message objects providing flattening and normalization."""
 
-    def clean(self) -> Sequence[ChatCompletionMessageParam]:
+    def clean(self) -> list[ChatCompletionMessageParam]:
         """Flattens nested content parts and normalizes messages to ChatCompletionMessageParam."""
         # 1. Convert any Pydantic models to dicts
         raw_dicts: list[dict[str, Any]] = [

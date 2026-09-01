@@ -5,8 +5,6 @@ from typing import TYPE_CHECKING, final
 
 from openai.types.chat import ChatCompletionMessageParam
 
-from polylogue.inference.helpers.message_list import MessageList
-
 if TYPE_CHECKING:
     from llama_cpp import Llama
 
@@ -39,7 +37,6 @@ class GGUFModel:
         if self.model is None:
             raise RuntimeError("Model is not loaded. Call load() first.")
 
-        messages = MessagesList(messages).clean()
         response = self.model.create_chat_completion(
             messages=messages,
             stream=False,
@@ -55,7 +52,6 @@ class GGUFModel:
         if self.model is None:
             raise RuntimeError("Model is not loaded. Call load() first.")
 
-        messages = MessageList(messages).clean()
         stream = self.model.create_chat_completion(
             messages=messages,
             stream=True,
