@@ -4,13 +4,13 @@ from types import GeneratorType
 import pytest
 
 from polylogue.constants import MLX_MODEL_PATH
-from polylogue.helpers.can_run_mlx_lm import can_run_mlx_lm
+from polylogue.helpers.get_supported_model_types import get_supported_model_types
 from polylogue.inference.protocols.inference_model import InferenceModel
 from polylogue.inference.text_to_text_models.mlx_model import MLXModel
 
-if not can_run_mlx_lm():
+if not MLXModel in get_supported_model_types():
     pytest.skip(
-        "Skipping MLX tests: Apple Silicon macOS required.",
+        "Skipping MLXModels tests since lib(s) required to run MLX models are not available",
         allow_module_level=True,
     )
 
@@ -34,30 +34,34 @@ def test_invalid_mlx_model() -> None:
 def test_mlx_model() -> None:
     model_path = MLX_MODEL_PATH
     model = MLXModel(model_path)
+    messages = [{"role": "user", "content": [{"type": "text", "text": "test"}]}]
 
     model.load()
-    response = model.generate("Q: hello, how are you? A: i am doing ")
+    response = model.generate(messages)
 
     assert len(response) > 0
 
     model.destroy()
 
-    assert model.model is None
-    assert model.tokenizer is None
+    with pytest.raises(AttributeError):
+        _ = model.model
+        _ = mode.tokenizer
 
 
 @pytest.mark.slow
 def test_mlx_model_streaming() -> None:
     model_path = MLX_MODEL_PATH
     model = MLXModel(model_path)
+    messages = [{"role": "user", "content": [{"type": "text", "text": "test"}]}]
 
     model.load()
-    stream = model.stream_generate("Q: hello, how are you? A: i am doing ")
+    stream = model.stream_generate(messages)
 
     assert isinstance(stream, GeneratorType)
     assert len("".join(stream)) > 0
 
     model.destroy()
 
-    assert model.model is None
-    assert model.tokenizer is None
+    with pytest.raises(AttributeError):
+        _ = model.model
+        _ = mode.tokenizer

@@ -32,3 +32,28 @@ def client() -> Generator[TestClient, None, None]:
         yield test_client
 
     app.dependency_overrides.clear()
+
+
+def pytest_addoption(parser):
+    parser.addoption(
+        "--all",
+        action="store_true",
+        default=False,
+        help="Runs all tests including skipped tests",
+    )
+
+
+def pytest_collection_modifyitems(config, items):
+    if config.getoption("--all"):
+        # If the flag is passed, remove the skip markers dynamically
+        for item in items:
+            if (
+                item.get_closest_marker("skip")
+                or item.get_closest_marker("skipif")
+                or item.get_closest_marker("slow")
+            ):
+                item.own_markers = [
+                    m
+                    for m in item.own_markers
+                    if m.name not in ("skip", "skipif", "slow")
+                ]

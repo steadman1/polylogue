@@ -12,7 +12,11 @@ def test_list_completions(client: TestClient) -> None:
 
 
 def test_create_completion_non_streaming(client: TestClient) -> None:
-    request = {"model": MOCK_MODEL_ID, "messages": [], "prompt": "", "stream": False}
+    request = {
+        "model": MOCK_MODEL_ID,
+        "messages": [{"role": "user", "content": [{"type": "text", "text": "test"}]}],
+        "stream": False,
+    }
 
     response = client.post(build_prefix(Endpoint.CHAT), json=request)
 
@@ -22,7 +26,11 @@ def test_create_completion_non_streaming(client: TestClient) -> None:
 
 
 def test_create_completion_streaming(client: TestClient) -> None:
-    request = {"model": MOCK_MODEL_ID, "messages": [], "prompt": "", "stream": True}
+    request = {
+        "model": MOCK_MODEL_ID,
+        "messages": [{"role": "user", "content": [{"type": "text", "text": "test"}]}],
+        "stream": True,
+    }
 
     response = client.post(build_prefix(Endpoint.CHAT), json=request)
 
@@ -36,20 +44,16 @@ def test_missing_required_parameters_create_completion(client: TestClient):
         {},
         {
             # "model": "",
-            "messages": [],
-            "prompt": "",
+            "messages": [
+                {"role": "user", "content": [{"type": "text", "text": "test"}]}
+            ],
             "stream": True,
         },
         {
             "model": "",
-            # "messages": [],
-            "prompt": "",
-            "stream": True,
-        },
-        {
-            "model": "",
-            "messages": [],
-            # "prompt": "",
+            # "messages": [
+            #   {"role": "user", "content": [{"type": "text", "text": "test"}]}
+            # ],
             "stream": True,
         },
     ]
