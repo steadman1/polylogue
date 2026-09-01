@@ -31,7 +31,6 @@ async def create_chat_completion(
     # check required request body parameters are provided
     model_id: str = create_params.get_or_422("model")
     messages: list[Any] = create_params.get_or_422("messages")
-    prompt: str = create_params.get_or_422("prompt")
     stream = create_params.get("stream", False)
 
     db = ModelRecordManager(db_client)
@@ -43,7 +42,7 @@ async def create_chat_completion(
     if stream:
         # should be text/event-stream since were yielding json encoded ChatCompletionChunks
         return StreamingResponse(
-            engine.stream_generate(prompt), media_type="text/event-stream"
+            engine.stream_generate(messages), media_type="text/event-stream"
         )
 
-    return engine.generate(prompt)
+    return engine.generate(messages)

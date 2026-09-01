@@ -1,24 +1,29 @@
 import gc
 from collections.abc import Generator
 from pathlib import Path
-from typing import final
+from typing import TYPE_CHECKING, final
 
-from llama_cpp import Llama
+from openai.types.chat import ChatCompletionMessageParam
+
+from polylogue.inference.helpers.message_list import MessageList
+
+if TYPE_CHECKING:
+    from llama_cpp import Llama
 
 
 @final
 class GGUFModel:
     def __init__(self, model_path: Path) -> None:
         self.model_path = model_path
-
         self.model: Llama | None = None
 
     def load(self) -> None:
+        from llama_cpp import Llama
+
         self.model = Llama(
             model_path=str(self.model_path),
-            # n_gpu_layers=-1, # Uncomment to use GPU acceleration
-            # seed=1337, # Uncomment to set a specific seed
-            # n_ctx=2048, # Uncomment to increase the context window
+            n_ctx=0,
+            n_gpu_layers=-1,
         )
 
     def destroy(self) -> None:
@@ -30,22 +35,35 @@ class GGUFModel:
 
         _ = gc.collect()
 
-    def generate(self, prompt: str) -> str:
-        if not self.model:
-            raise ValueError("model is null")
+    def generate(self, messages: list[ChatCompletionMessageParam]) -> str:
+        if self.model is None:
+            raise RuntimeError("Model is not loaded. Call load() first.")
 
-        response = self.model.create_completion(
-            prompt=prompt, max_tokens=150, stream=False
+        messages = MessagesList(messages).clean()
+        response = self.model.create_chat_completion(
+            messages=messages,
+            max_tokens=1024,
+            stream=False,
         )
 
-        return response["choices"][0]["text"]
+        content = response["choices"][0]["message"]["content"]
+        return content or ""
 
-    def stream_generate(self, prompt: str) -> Generator[str, None, None]:
-        if not self.model:
-            raise ValueError("model is null")
+    def stream_generate(
+        self, messages: list[ChatCompletionMessageParam]
+    ) -> Generator[str, None, None]:
+        if self.model is None:
+            raise RuntimeError("Model is not loaded. Call load() first.")
 
-        stream = self.model.create_completion(
-            prompt=prompt, max_tokens=150, stream=True
+        messages = MessageList(messages).clean()
+        stream = self.model.create_chat_completion(
+            messages=messages,
+            max_tokens=1024,
+            stream=True,
         )
+
         for chunk in stream:
-            yield chunk["choices"][0]["text"]
+            delta = chunk["choices"][0].get("delta", {})
+            content = delta.get("content")
+            if content:
+                yield content

@@ -3,7 +3,7 @@ from types import GeneratorType
 
 import pytest
 
-from polylogue.constants import GGUF_MODEL_PATH, TEST_PROMPT
+from polylogue.constants import GGUF_MODEL_PATH, MOCK_MESSAGES
 from polylogue.helpers.get_supported_model_types import get_supported_model_types
 from polylogue.inference.protocols.inference_model import InferenceModel
 from polylogue.inference.text_to_text_models.gguf_model import GGUFModel
@@ -36,7 +36,7 @@ def test_gguf_model() -> None:
     model = GGUFModel(model_path)
 
     model.load()
-    response = model.generate(TEST_PROMPT)
+    response = model.generate(MOCK_MESSAGES)
 
     assert len(response) > 0
 
@@ -51,7 +51,7 @@ def test_gguf_model_streaming() -> None:
     model = GGUFModel(model_path)
 
     model.load()
-    stream = model.stream_generate(TEST_PROMPT)
+    stream = model.stream_generate(MOCK_MESSAGES)
 
     assert isinstance(stream, GeneratorType)
     assert len("".join(stream)) > 0

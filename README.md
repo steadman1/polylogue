@@ -65,7 +65,17 @@ uv run polylogue-cli --help
 
 ## Known Issues & Fixes
 
-sometimes `uv run` will throw `ModuleNotFoundError: No module named 'polylogue'`. running `rm -rf .venv uv.lock && uv sync` should resolve it
+### ModuleNotFoundError: No module named 'polylogue'
+
+sometimes `uv run` will throw `ModuleNotFoundError: No module named 'polylogue'`. 
+
+running `rm -rf .venv uv.lock && uv sync` should resolve it
+
+### MLX lib hangs on mlx_lm.load
+
+sometimes `mlx_lm.load(...)` will hang indefinitely (?). 
+
+rebuilding mlx_lm with `rm -rf .venv uv.lock && uv sync` should resolve it
 
 ## TODO / Current Plan
 

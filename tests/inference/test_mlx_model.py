@@ -3,7 +3,7 @@ from types import GeneratorType
 
 import pytest
 
-from polylogue.constants import MLX_MODEL_PATH
+from polylogue.constants import MLX_MODEL_PATH, MOCK_MESSAGES
 from polylogue.helpers.get_supported_model_types import get_supported_model_types
 from polylogue.inference.protocols.inference_model import InferenceModel
 from polylogue.inference.text_to_text_models.mlx_model import MLXModel
@@ -34,10 +34,9 @@ def test_invalid_mlx_model() -> None:
 def test_mlx_model() -> None:
     model_path = MLX_MODEL_PATH
     model = MLXModel(model_path)
-    messages = [{"role": "user", "content": [{"type": "text", "text": "test"}]}]
 
     model.load()
-    response = model.generate(messages)
+    response = model.generate(MOCK_MESSAGES)
 
     assert len(response) > 0
 
@@ -45,17 +44,16 @@ def test_mlx_model() -> None:
 
     with pytest.raises(AttributeError):
         _ = model.model
-        _ = mode.tokenizer
+        _ = model.tokenizer
 
 
 @pytest.mark.slow
 def test_mlx_model_streaming() -> None:
     model_path = MLX_MODEL_PATH
     model = MLXModel(model_path)
-    messages = [{"role": "user", "content": [{"type": "text", "text": "test"}]}]
 
     model.load()
-    stream = model.stream_generate(messages)
+    stream = model.stream_generate(MOCK_MESSAGES)
 
     assert isinstance(stream, GeneratorType)
     assert len("".join(stream)) > 0
@@ -64,4 +62,4 @@ def test_mlx_model_streaming() -> None:
 
     with pytest.raises(AttributeError):
         _ = model.model
-        _ = mode.tokenizer
+        _ = model.tokenizer

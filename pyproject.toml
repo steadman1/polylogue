@@ -16,6 +16,11 @@ dependencies = [
     "redis>=7.0.1",
 ]
 
+[dependency-groups]
+dev = [
+    "poethepoet",
+]
+
 [project.scripts]
 polylogue = "polylogue:main"
 polylogue-cli = "polylogue.cli:cli"
@@ -29,9 +34,6 @@ ignore = ["I001"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/polylogue"]
-
-[tool.uv]
-package = true
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]

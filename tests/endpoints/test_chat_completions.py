@@ -1,6 +1,6 @@
 from fastapi.testclient import TestClient
 
-from polylogue.constants import MOCK_MODEL_ID, Endpoint
+from polylogue.constants import MOCK_MESSAGES, MOCK_MODEL_ID, Endpoint
 from polylogue.helpers.build_prefix import build_prefix
 
 
@@ -14,7 +14,7 @@ def test_list_completions(client: TestClient) -> None:
 def test_create_completion_non_streaming(client: TestClient) -> None:
     request = {
         "model": MOCK_MODEL_ID,
-        "messages": [{"role": "user", "content": [{"type": "text", "text": "test"}]}],
+        "messages": MOCK_MESSAGES,
         "stream": False,
     }
 
@@ -28,7 +28,7 @@ def test_create_completion_non_streaming(client: TestClient) -> None:
 def test_create_completion_streaming(client: TestClient) -> None:
     request = {
         "model": MOCK_MODEL_ID,
-        "messages": [{"role": "user", "content": [{"type": "text", "text": "test"}]}],
+        "messages": MOCK_MESSAGES,
         "stream": True,
     }
 
@@ -44,15 +44,13 @@ def test_missing_required_parameters_create_completion(client: TestClient):
         {},
         {
             # "model": "",
-            "messages": [
-                {"role": "user", "content": [{"type": "text", "text": "test"}]}
-            ],
+            "messages": [{"role": "user", "content": MOCK_MESSAGES}],
             "stream": True,
         },
         {
             "model": "",
             # "messages": [
-            #   {"role": "user", "content": [{"type": "text", "text": "test"}]}
+            #   {"role": "user", "content": MOCK_MESSAGES}
             # ],
             "stream": True,
         },

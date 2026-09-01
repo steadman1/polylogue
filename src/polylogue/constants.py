@@ -16,7 +16,8 @@ class Endpoint(Enum):
 GGUF_TARGET = ".gguf"
 MLX_TARGET = "config.json"
 
-TEST_PROMPT = "Q: hello, how are you? A: i am doing "
+MOCK_PROMPT = "Q: hello, how are you? A: i am doing "
+MOCK_MESSAGES = [{"role": "user", "content": [{"type": "text", "text": MOCK_PROMPT}]}]
 
 GGUF_MODEL_PATH = Path(os.environ["GGUF_MODEL_PATH"])
 MLX_MODEL_PATH = Path(os.environ["MLX_MODEL_PATH"])

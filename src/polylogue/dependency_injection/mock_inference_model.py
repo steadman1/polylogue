@@ -1,5 +1,7 @@
 from collections.abc import Generator
 
+from openai.types.chat import ChatCompletionMessageParam
+
 
 class MockInferenceModel:
     def load(self) -> None:
@@ -8,13 +10,12 @@ class MockInferenceModel:
     def destroy(self) -> None:
         return
 
-    def generate(self, prompt: str) -> str:
-        _ = prompt
+    def generate(self, messages: list[ChatCompletionMessageParam]) -> str:
         return "test non-streaming response"
 
-    def stream_generate(self, prompt: str) -> Generator[str, None, None]:
-        _ = prompt
-
+    def stream_generate(
+        self, messages: list[ChatCompletionMessageParam]
+    ) -> Generator[str, None, None]:
         index, chunks = 0, ["test", "streaming", "response"]
         while index < len(chunks):
             yield chunks[index]

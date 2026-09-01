@@ -1,15 +1,16 @@
 from __future__ import annotations
 
-from collections.abc import Generator
+from collections.abc import Generator, Sequence
 from datetime import datetime
 from typing import final
 
-from openai.types.chat import ChatCompletionMessage
+from openai.types.chat import ChatCompletionMessage, ChatCompletionMessageParam
 from openai.types.chat.chat_completion import ChatCompletion, Choice
 from openai.types.chat.chat_completion_chunk import ChatCompletionChunk, ChoiceDelta
 from openai.types.chat.chat_completion_chunk import Choice as ChunkChoice
 
 from polylogue.helpers.generator_check_last import generator_check_last
+from polylogue.inference.helpers.message_list import MessageList
 from polylogue.inference.protocols.inference_model import InferenceModel
 
 
@@ -26,10 +27,20 @@ class TextToTextEngine:
     def destroy(self) -> None:
         self.model.destroy()
 
+    def clean_messages(
+        self, messages: list[dict[str, str | list[dict[str, str]]]]
+    ) -> list[ChatCompletionMessageParam]:
+
+        return list(MessageList(messages).clean())
+
     # generation should format the raw dictionary into an openai Completion
-    def generate(self, prompt: str) -> ChatCompletion:
+    def generate(
+        self, messages: list[dict[str, str | list[dict[str, str]]]]
+    ) -> ChatCompletion:
         timestamp_seconds = int(datetime.now().timestamp())
-        response = self.model.generate(prompt)
+
+        messages: list[ChatCompletionMessageParam] = self.clean_messages(messages)
+        response = self.model.generate(messages)
 
         choice = Choice(
             finish_reason="stop",
@@ -45,9 +56,13 @@ class TextToTextEngine:
             object="chat.completion",
         )
 
-    def stream_generate(self, prompt: str) -> Generator[str, None, None]:
+    def stream_generate(
+        self, messages: list[dict[str, str | list[dict[str, str]]]]
+    ) -> Generator[str, None, None]:
         timestamp_seconds = int(datetime.now().timestamp())
-        stream = self.model.stream_generate(prompt)
+
+        messages: list[ChatCompletionMessageParam] = self.clean_messages(messages)
+        stream = self.model.stream_generate(messages)
 
         for is_last, chunk in generator_check_last(stream):
             choice = ChunkChoice(
