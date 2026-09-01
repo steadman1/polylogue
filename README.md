@@ -20,7 +20,7 @@ echo 'MLX_MODEL_PATH="path/to/mlx/model"' >> ~/.zshrc && source ~/.zshrc
 
 ```bash
 redis-server
-uv run fastapi dev src/polylogue/__init__.py
+uv run fastapi dev src/polylogue/__init__.py --reload-dir src/polylogue --port 8080
 ```
 
 ## Running Unit Tests with pytest

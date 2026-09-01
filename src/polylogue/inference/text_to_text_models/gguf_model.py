@@ -11,8 +11,10 @@ if TYPE_CHECKING:
 
 @final
 class GGUFModel:
-    def __init__(self, model_path: Path) -> None:
+    def __init__(self, model_path: Path, n_ctx: int = 128_000) -> None:
         self.model_path = model_path
+        self.n_ctx: int = n_ctx
+
         self.model: Llama | None = None
 
     def load(self) -> None:
@@ -20,8 +22,10 @@ class GGUFModel:
 
         self.model = Llama(
             model_path=str(self.model_path),
-            n_ctx=0,
+            n_ctx=self.n_ctx,
             n_gpu_layers=-1,
+            type_k=1,  # Q8_0 or Q4_0 KV cache
+            type_v=1,
         )
 
     def destroy(self) -> None:
