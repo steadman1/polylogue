@@ -42,8 +42,8 @@ class GGUFModel:
         messages = MessagesList(messages).clean()
         response = self.model.create_chat_completion(
             messages=messages,
-            max_tokens=1024,
             stream=False,
+            stop=["<|im_end|>", "</s>"],
         )
 
         content = response["choices"][0]["message"]["content"]
@@ -58,8 +58,8 @@ class GGUFModel:
         messages = MessageList(messages).clean()
         stream = self.model.create_chat_completion(
             messages=messages,
-            max_tokens=1024,
             stream=True,
+            stop=["<|im_end|>", "</s>"],
         )
 
         for chunk in stream:

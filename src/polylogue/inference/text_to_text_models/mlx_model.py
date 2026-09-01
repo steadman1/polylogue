@@ -40,6 +40,7 @@ class MLXModel:
             tokenize=False,
             max_tokens=128,
             add_generation_prompt=True,
+            stop=["<|im_end|>", "</s>"],
         )
 
         return generate(self.model, self.tokenizer, prompt=prompt, verbose=True)
@@ -54,6 +55,7 @@ class MLXModel:
             tokenize=False,
             max_tokens=128,
             add_generation_prompt=True,
+            stop=["<|im_end|>", "</s>"],
         )
 
         stream = stream_generate(self.model, self.tokenizer, prompt, max_tokens=512)
