@@ -3,7 +3,7 @@ from collections.abc import Generator
 from pathlib import Path
 from typing import TYPE_CHECKING, final
 
-from openai.types.chat import ChatCompletionMessageParam
+from openai.types.chat import ChatCompletionMessageParam, ChatCompletionToolParam
 
 if TYPE_CHECKING:
     from llama_cpp import Llama
@@ -37,12 +37,18 @@ class GGUFModel:
 
         _ = gc.collect()
 
-    def generate(self, messages: list[ChatCompletionMessageParam]) -> str:
+    def generate(
+        self,
+        messages: list[ChatCompletionMessageParam],
+        tools: list[ChatCompletionToolParam],
+    ) -> str:
         if self.model is None:
             raise RuntimeError("Model is not loaded. Call load() first.")
 
         response = self.model.create_chat_completion(
             messages=messages,
+            tools=tools,
+            tool_choice="auto",
             stream=False,
             stop=["<|im_end|>", "</s>"],
         )
@@ -51,13 +57,17 @@ class GGUFModel:
         return content or ""
 
     def stream_generate(
-        self, messages: list[ChatCompletionMessageParam]
+        self,
+        messages: list[ChatCompletionMessageParam],
+        tools: list[ChatCompletionToolParam],
     ) -> Generator[str, None, None]:
         if self.model is None:
             raise RuntimeError("Model is not loaded. Call load() first.")
 
         stream = self.model.create_chat_completion(
             messages=messages,
+            tools=tools,
+            tool_choice="auto",
             stream=True,
             stop=["<|im_end|>", "</s>"],
         )

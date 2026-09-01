@@ -19,7 +19,10 @@ from polylogue.inference.text_to_text_factory import TextToTextFactory
 # want to hand-off each completion to be handled by the client
 # and store as few on-server as possible, ideally none at all
 @app.get(build_prefix(Endpoint.CHAT), response_model=list[ChatCompletion])
-@app.get(build_prefix(Endpoint.CHAT, without_version=True), response_model=list[ChatCompletion])
+@app.get(
+    build_prefix(Endpoint.CHAT, without_version=True),
+    response_model=list[ChatCompletion],
+)
 async def list_chat_completions() -> list[ChatCompletion]:
     # return a list of stored completions
     return []
@@ -33,6 +36,7 @@ async def create_chat_completion(
     # check required request body parameters are provided
     model_id: str = create_params.get_or_422("model")
     messages: list[Any] = create_params.get_or_422("messages")
+    tools: list[Any] = create_params.get_or_422("tools")
     stream = create_params.get("stream", False)
 
     db = ModelRecordManager(db_client)
@@ -44,7 +48,7 @@ async def create_chat_completion(
     if stream:
         # should be text/event-stream since were yielding json encoded ChatCompletionChunks
         return StreamingResponse(
-            engine.stream_generate(messages), media_type="text/event-stream"
+            engine.stream_generate(messages, tools), media_type="text/event-stream"
         )
 
-    return engine.generate(messages)
+    return engine.generate(messages, tools)

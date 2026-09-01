@@ -3,7 +3,7 @@ from collections.abc import Generator
 from pathlib import Path
 from typing import final
 
-from openai.types.chat import ChatCompletionMessageParam
+from openai.types.chat import ChatCompletionMessageParam, ChatCompletionToolParam
 
 from polylogue.inference.chat_templates.universal import CHATML_TEMPLATE
 
@@ -32,7 +32,11 @@ class MLXModel:
         _ = gc.collect()
         mlx.clear_cache()
 
-    def generate(self, messages: list[ChatCompletionMessageParam]) -> str:
+    def generate(
+        self,
+        messages: list[ChatCompletionMessageParam],
+        tools: list[ChatCompletionToolParam],
+    ) -> str:
         from mlx_lm import generate
 
         prompt = self.tokenizer.apply_chat_template(
@@ -46,7 +50,9 @@ class MLXModel:
         return generate(self.model, self.tokenizer, prompt=prompt, verbose=True)
 
     def stream_generate(
-        self, messages: list[ChatCompletionMessageParam]
+        self,
+        messages: list[ChatCompletionMessageParam],
+        tools: list[ChatCompletionToolParam],
     ) -> Generator[str, None, None]:
         from mlx_lm import stream_generate
 

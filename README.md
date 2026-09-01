@@ -88,7 +88,7 @@ rebuilding mlx_lm with `rm -rf .venv uv.lock && uv sync` should resolve it
 - [ ] AGENTS.md for those who use agents in this repo
 - [x] Model interface with mlx/llama.cpp
 - [ ] Tool call support
-- [ ] Responses API endpoint support
+- [ ] Responses API endpoint support (?)
 - [x] CLI tool for adding formatted model records to db
 - [x] Scalable, multi-host database (prob Redis) to store chat_completions and model_id -> model_path pairs
 - [ ] Work queue to handle host machine(s) reponse generation concurrency

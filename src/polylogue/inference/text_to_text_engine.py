@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Generator
+from collections.abc import Generator, Sequence
 from datetime import datetime
 from typing import final
 
@@ -8,6 +8,7 @@ from openai.types.chat import ChatCompletionMessage, ChatCompletionMessageParam
 from openai.types.chat.chat_completion import ChatCompletion, Choice
 from openai.types.chat.chat_completion_chunk import ChatCompletionChunk, ChoiceDelta
 from openai.types.chat.chat_completion_chunk import Choice as ChunkChoice
+from openai.types.chat.chat_completion_tool_param import ChatCompletionToolParam
 
 from polylogue.helpers.generator_check_last import generator_check_last
 from polylogue.inference.helpers.message_list import MessageList
@@ -28,14 +29,16 @@ class TextToTextEngine:
         self.model.destroy()
 
     def clean_messages(
-        self, messages: list[dict[str, str | list[dict[str, str]]]]
+        self, messages: Sequence[ChatCompletionMessageParam]
     ) -> list[ChatCompletionMessageParam]:
 
         return MessageList(messages).clean()
 
     # generation should format the raw dictionary into an openai Completion
     def generate(
-        self, messages: list[dict[str, str | list[dict[str, str]]]]
+        self,
+        messages: Sequence[ChatCompletionMessageParam],
+        tools: Sequence[ChatCompletionToolParam] | None = None,
     ) -> ChatCompletion:
         timestamp_seconds = int(datetime.now().timestamp())
 
@@ -59,7 +62,9 @@ class TextToTextEngine:
         )
 
     def stream_generate(
-        self, messages: list[dict[str, str | list[dict[str, str]]]]
+        self,
+        messages: Sequence[ChatCompletionMessageParam],
+        tools: Sequence[ChatCompletionToolParam] | None = None,
     ) -> Generator[str, None, None]:
         timestamp_seconds = int(datetime.now().timestamp())
 
