@@ -1,10 +1,9 @@
 from collections.abc import Generator
-from types import GeneratorType
 
 
 # written by Gemini
 def generator_check_last[T](
-    generator: GeneratorType,
+    generator: Generator[T, None, None],
 ) -> Generator[(bool, T), None, None]:
     iterable = iter(generator)
 

@@ -39,8 +39,10 @@ class TextToTextEngine:
     ) -> ChatCompletion:
         timestamp_seconds = int(datetime.now().timestamp())
 
-        messages: list[ChatCompletionMessageParam] = self.clean_messages(messages)
-        response = self.model.generate(messages)
+        cleaned_messages: list[ChatCompletionMessageParam] = self.clean_messages(
+            messages
+        )
+        response = self.model.generate(cleaned_messages)
 
         choice = Choice(
             finish_reason="stop",
@@ -61,8 +63,10 @@ class TextToTextEngine:
     ) -> Generator[str, None, None]:
         timestamp_seconds = int(datetime.now().timestamp())
 
-        messages: list[ChatCompletionMessageParam] = self.clean_messages(messages)
-        stream = self.model.stream_generate(messages)
+        cleaned_messages: list[ChatCompletionMessageParam] = self.clean_messages(
+            messages
+        )
+        stream = self.model.stream_generate(cleaned_messages)
 
         for is_last, chunk in generator_check_last(stream):
             choice = ChunkChoice(
