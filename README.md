@@ -8,11 +8,13 @@ pre-req: this project depends on mlx, so to run
 
 1. install `uv` and `redis` on your machine and make sure both are setup properly
 2. add environment variables for known model paths. these can be empty/mock values but this might cause some tests to fail. you'll need to add the env vars to your .zshrc, .bashrc, etc.
+  - [Ornith-1.5-9B-GGUF](https://huggingface.co/ornith-ai/Ornith-1.5-9B-GGUF) @ Q4_K_M is a good GGUF model for testing
 
 ```bash
-echo 'GGUF_MODEL_PATH="path/to/gguf/model.gguf"' >> ~/.zshrc && source ~/.zshrc # or .bashrc if that's what your machine uses
-echo 'MLX_MODEL_PATH="path/to/mlx/model"' >> ~/.zshrc && source ~/.zshrc
+echo 'export GGUF_MODEL_PATH="path/to/gguf/model.gguf"' >> ~/.zshrc # or .bashrc if that's what your machine uses
+echo 'export MLX_MODEL_PATH="path/to/mlx/model"' >> ~/.zshrc && source ~/.zshrc
 ```
+
 
 3. run the server locally with fastapi and redis
     - start your redis instance 

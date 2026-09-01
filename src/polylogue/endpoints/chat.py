@@ -19,12 +19,14 @@ from polylogue.inference.text_to_text_factory import TextToTextFactory
 # want to hand-off each completion to be handled by the client
 # and store as few on-server as possible, ideally none at all
 @app.get(build_prefix(Endpoint.CHAT), response_model=list[ChatCompletion])
+@app.get(build_prefix(Endpoint.CHAT, without_version=True), response_model=list[ChatCompletion])
 async def list_chat_completions() -> list[ChatCompletion]:
     # return a list of stored completions
     return []
 
 
 @app.post(build_prefix(Endpoint.CHAT), response_model=None)
+@app.get(build_prefix(Endpoint.CHAT, without_version=True), response_model=None)
 async def create_chat_completion(
     create_params: ValidatedCompletionCreateParams, db_client: DBClient
 ) -> ChatCompletion | StreamingResponse:
