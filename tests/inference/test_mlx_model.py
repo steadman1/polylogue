@@ -4,6 +4,7 @@ from types import GeneratorType
 import pytest
 
 from polylogue.constants import MLX_MODEL_PATH, MOCK_MESSAGES
+from polylogue.helpers.assert_implements_protocol import assert_implements_protocol
 from polylogue.helpers.get_supported_model_types import get_supported_model_types
 from polylogue.inference.protocols.inference_model import InferenceModel
 from polylogue.inference.text_to_text_models.mlx_model import MLXModel
@@ -20,6 +21,7 @@ def test_conforms_protocol_mlx_model() -> None:
     model = MLXModel(model_path)
 
     assert isinstance(model, InferenceModel)
+    assert_implements_protocol(MLXModel, InferenceModel)
 
 
 def test_invalid_mlx_model() -> None:

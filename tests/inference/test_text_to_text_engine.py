@@ -8,6 +8,7 @@ from openai.types.chat.chat_completion_chunk import ChatCompletionChunk
 
 from polylogue.constants import MOCK_MESSAGES
 from polylogue.dependency_injection.mock_inference_model import MockInferenceModel
+from polylogue.helpers.assert_implements_protocol import assert_implements_protocol
 from polylogue.inference.protocols.inference_model import InferenceModel
 from polylogue.inference.protocols.inference_model_engine import InferenceModelEngine
 from polylogue.inference.text_to_text_engine import TextToTextEngine
@@ -18,6 +19,7 @@ def test_conforms_protocol_TextToTextEngine():
     model_id = "test_model"
 
     assert isinstance(model, InferenceModel)
+    assert_implements_protocol(MockInferenceModel, InferenceModel)
 
     engine = TextToTextEngine(model, model_id)
 
