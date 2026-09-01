@@ -45,7 +45,20 @@ def get_model_cmd(model_id: str) -> None:
     type=click.Path(exists=True),
     help="Path to model file.",
 )
-def save_model_cmd(model_id: str, path: str) -> None:
+@click.option(
+    "--n-ctx",
+    "-n",
+    required=True,
+    type=int,
+    help="Maximum length of model's context window.",
+)
+@click.option(
+    "--description",
+    "-d",
+    required=False,
+    help="Helpful description of the model.",
+)
+def save_model_cmd(model_id: str, path: str, n_ctx: int, description: str) -> None:
     """Register a new model record."""
 
     async def _runner() -> None:
@@ -59,6 +72,8 @@ def save_model_cmd(model_id: str, path: str) -> None:
             object="model",
             owned_by="local",
             path=Path(path).resolve(),
+            maximum_n_ctx=n_ctx,
+            description=description,
         )
 
         await db.save(record)
