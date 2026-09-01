@@ -3,8 +3,6 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import final
 
-from redis.asyncio.client import Redis
-
 from polylogue.constants import DB_MODELS_NAMESPACE
 from polylogue.db.model_record import ModelRecord
 from polylogue.db.protocols.db_client import DBClient
@@ -12,7 +10,7 @@ from polylogue.db.protocols.db_client import DBClient
 
 @final
 class ModelRecordManager:
-    def __init__(
+    def __init__[T](
         self, client: DBClient[str], namespace: str = DB_MODELS_NAMESPACE
     ) -> None:
         self.namespace = namespace

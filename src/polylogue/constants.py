@@ -10,6 +10,7 @@ API_VERSION: str = "v1"
 class Endpoint(Enum):
     CHAT = "chat/completions"
     MODELS = "models"
+    RESPONSES = "responses"
     # ...
 
 
