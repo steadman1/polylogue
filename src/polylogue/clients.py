@@ -5,6 +5,8 @@ from typing import Annotated
 from fastapi import Depends, FastAPI, Request
 from redis.asyncio import ConnectionPool, Redis
 
+from polylogue.inference.model_cache_manager import ModelCacheManager
+
 # exposes a fastapi app and a function for creating a redis client
 
 
@@ -26,10 +28,12 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
 
     # Attach client to application state
     app.state.db_client = client
+    app.state.model_manager = ModelCacheManager(max_loaded=1)
 
     yield
 
     # Clean teardown on shutdown
+    app.state.model_manager.shutdown()
     await client.aclose()
     await pool.disconnect()
 

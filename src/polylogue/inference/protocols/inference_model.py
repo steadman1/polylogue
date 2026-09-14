@@ -1,7 +1,11 @@
-from collections.abc import Generator
+from collections.abc import Generator, Sequence
 from typing import Protocol, runtime_checkable
 
-from openai.types.chat import ChatCompletionMessageParam
+from openai.types.chat import (
+    ChatCompletion,
+    ChatCompletionMessageParam,
+    ChatCompletionToolParam,
+)
 
 
 @runtime_checkable
@@ -10,8 +14,14 @@ class InferenceModel(Protocol):
 
     def destroy(self) -> None: ...
 
-    def generate(self, messages: list[ChatCompletionMessageParam]) -> str: ...
+    def generate(
+        self,
+        messages: list[ChatCompletionMessageParam],
+        tools: Sequence[ChatCompletionToolParam] | None,
+    ) -> ChatCompletion: ...
 
     def stream_generate(
-        self, messages: list[ChatCompletionMessageParam]
-    ) -> Generator[str, None, None]: ...
+        self,
+        messages: list[ChatCompletionMessageParam],
+        tools: Sequence[ChatCompletionToolParam] | None,
+    ) -> Generator[ChatCompletion, None, None]: ...

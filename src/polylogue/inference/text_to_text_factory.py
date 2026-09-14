@@ -18,7 +18,7 @@ class TextToTextFactory:
         if model_path.is_file() and model_name.endswith(GGUF_TARGET):
             # *.gguf files are handled by llama cpp
             if GGUFModel in get_supported_model_types():
-                return GGUFModel(model_path)
+                return GGUFModel(model_name.removesuffix(GGUF_TARGET), model_path)
             else:
                 raise ModelTypeUnsupportedError(
                     "Dependecy(s) required to run GGUF models are not available"
@@ -27,7 +27,7 @@ class TextToTextFactory:
         if model_path.is_dir() and (model_path / MLX_TARGET).is_file():
             # mlx should check for a config.json and safetensors in target directory
             if MLXModel in get_supported_model_types():
-                return MLXModel(model_path)
+                return MLXModel(model_name, model_path)
             else:
                 raise ModelTypeUnsupportedError(
                     "Dependecy(s) required to run MLX models are not available"

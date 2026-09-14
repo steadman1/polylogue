@@ -49,6 +49,8 @@ uv run polylogue-cli save
     -p /path/to/model            # OR --path
     -n 128_000                   # OR --n-ctx
     -d "helpful description..."  # OR --description
+
+uv run polylogue-cli save -m model_id -p /path/to/model -n 128_000 -d "helpful description..."
 ```
 
 ### List all ModelRecords
@@ -93,3 +95,4 @@ rebuilding mlx_lm with `rm -rf .venv uv.lock && uv sync` should resolve it
 - [x] Scalable, multi-host database (prob Redis) to store chat_completions and model_id -> model_path pairs
 - [ ] Work queue to handle host machine(s) reponse generation concurrency
 - [ ] Model manager to swap models (prob LRU caching) such that required_memory never exceeds available_memory
+- [ ] Set up docker and cloudflared config

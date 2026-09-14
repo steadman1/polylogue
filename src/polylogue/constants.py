@@ -26,3 +26,6 @@ MLX_MODEL_PATH = Path(os.environ["MLX_MODEL_PATH"])
 MOCK_MODEL_ID = "some_model_id"
 
 DB_MODELS_NAMESPACE = "models:registry"
+
+XML_TOOL_CALL_START = "<tool_call>"
+XML_TOOL_CALL_END = "</tool_call>"

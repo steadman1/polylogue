@@ -40,53 +40,24 @@ class TextToTextEngine:
         messages: Sequence[ChatCompletionMessageParam],
         tools: Sequence[ChatCompletionToolParam] | None = None,
     ) -> ChatCompletion:
-        timestamp_seconds = int(datetime.now().timestamp())
-
         cleaned_messages: list[ChatCompletionMessageParam] = self.clean_messages(
             messages
         )
-        response = self.model.generate(cleaned_messages)
 
-        choice = Choice(
-            finish_reason="stop",
-            index=0,
-            message=ChatCompletionMessage(content=response, role="assistant"),
-        )
-
-        return ChatCompletion(
-            id="0",
-            choices=[choice],
-            created=timestamp_seconds,
-            model=self.model_id,
-            object="chat.completion",
-        )
+        return self.model.generate(cleaned_messages, tools)
 
     def stream_generate(
         self,
         messages: Sequence[ChatCompletionMessageParam],
         tools: Sequence[ChatCompletionToolParam] | None = None,
     ) -> Generator[str, None, None]:
-        timestamp_seconds = int(datetime.now().timestamp())
-
         cleaned_messages: list[ChatCompletionMessageParam] = self.clean_messages(
             messages
         )
-        stream = self.model.stream_generate(cleaned_messages)
 
-        for is_last, chunk in generator_check_last(stream):
-            choice = ChunkChoice(
-                finish_reason="stop" if is_last else None,
-                index=0,
-                delta=ChoiceDelta(content=chunk, role="assistant"),
-            )
-            chunk = ChatCompletionChunk(
-                id="0",
-                choices=[choice],
-                created=timestamp_seconds,
-                model=self.model_id,
-                object="chat.completion.chunk",
-            )
+        stream = self.model.stream_generate(cleaned_messages, tools)
 
+        for chunk in stream:
             # Serialize Pydantic chunk to JSON string, formatted for SSE
             chunk_json = chunk.model_dump_json()
             yield f"data: {chunk_json}\n\n"

@@ -11,7 +11,8 @@ from polylogue.inference.chat_templates.universal import CHATML_TEMPLATE
 # Models should only be created usin a factory
 @final
 class MLXModel:
-    def __init__(self, model_path: Path) -> None:
+    def __init__(self, model_name: str, model_path: Path) -> None:
+        self.model_name = model_name
         self.model_path = model_path
 
         self.model = None
