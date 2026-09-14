@@ -14,6 +14,7 @@ dependencies = [
     "openai",
     "psutil>=7.2.2",
     "pytest>=8.4.2",
+    "python-dotenv>=1.2.3",
     "redis>=7.0.1",
 ]
 
@@ -24,7 +25,7 @@ dev = [
 
 [project.scripts]
 polylogue = "polylogue:main"
-polylogue-cli = "polylogue.cli:cli"
+polylogue-cli = "polylogue.cli.main:cli"
 
 [build-system]
 requires = ["uv_build>=0.12.5,<0.13.0", "hatchling"]

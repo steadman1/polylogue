@@ -2,12 +2,13 @@ from __future__ import annotations
 
 import psutil
 
+from polylogue.auth.get_current_api_key import AuthenticatedKey
 from polylogue.clients import app
 
 
 # debug only endpoint
 @app.get("/ram")
-async def get_ram_usage() -> dict[str, float]:
+async def get_ram_usage(api_key: AuthenticatedKey) -> dict[str, float]:
     # Get system-wide memory details
     memory_info = psutil.virtual_memory()
 

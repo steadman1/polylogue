@@ -10,7 +10,7 @@ from polylogue.inference.model_cache_manager import ModelCacheManager
 # exposes a fastapi app and a function for creating a redis client
 
 
-def get_redis_client() -> tuple[ConnectionPool, Redis]:
+def get_redis_client() -> tuple[ConnectionPool, RedisClientWithDependency]:
     pool = ConnectionPool.from_url(
         "redis://localhost:6379/0",
         max_connections=20,
@@ -48,4 +48,4 @@ def get_db(request: Request) -> Redis:
 
 
 # Type alias for cleaner endpoint signatures
-DBClient = Annotated[Redis, Depends(get_db)]
+RedisClientDep = Annotated[Redis, Depends(get_db)]

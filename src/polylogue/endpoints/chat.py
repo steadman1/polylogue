@@ -4,7 +4,8 @@ from fastapi import Request
 from fastapi.responses import StreamingResponse
 from openai.types.chat.chat_completion import ChatCompletion
 
-from polylogue.clients import DBClient, app
+from polylogue.auth.get_current_api_key import AuthenticatedKey
+from polylogue.clients import RedisClientDep, app
 from polylogue.constants import Endpoint
 from polylogue.db.model_record import ModelRecord
 from polylogue.db.model_record_manager import ModelRecordManager
@@ -23,7 +24,7 @@ from polylogue.inference.text_to_text_engine import TextToTextEngine
     build_prefix(Endpoint.CHAT, without_version=True),
     response_model=list[ChatCompletion],
 )
-async def list_chat_completions() -> list[ChatCompletion]:
+async def list_chat_completions(api_key: AuthenticatedKey) -> list[ChatCompletion]:
     # return a list of stored completions
     return []
 
@@ -33,8 +34,13 @@ async def list_chat_completions() -> list[ChatCompletion]:
 async def create_chat_completion(
     request: Request,
     create_params: ValidatedCompletionCreateParams,
-    db_client: DBClient,
+    db_client: RedisClientDep,
+    api_key: AuthenticatedKey,
 ) -> ChatCompletion | StreamingResponse:
+    print(request)
+    # owner = api_key.owner_id
+    # limit = api_key.rate_limit
+
     # check required request body parameters are provided
     model_id: str = create_params.get_or_422("model")
     messages: list[Any] = create_params.get_or_422("messages")

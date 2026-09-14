@@ -4,6 +4,11 @@ import os
 from enum import Enum
 from pathlib import Path
 
+from dotenv import load_dotenv
+
+# Load the keys/values from the .env file into os.environ
+load_dotenv()
+
 API_VERSION: str = "v1"
 
 
@@ -22,6 +27,9 @@ MOCK_MESSAGES = [{"role": "user", "content": [{"type": "text", "text": MOCK_PROM
 
 GGUF_MODEL_PATH = Path(os.environ["GGUF_MODEL_PATH"])
 MLX_MODEL_PATH = Path(os.environ["MLX_MODEL_PATH"])
+
+SERVER_PEPPER_ENCODING = "utf-8"
+SERVER_PEPPER = bytes(os.environ["SERVER_PEPPER"], SERVER_PEPPER_ENCODING)
 
 MOCK_MODEL_ID = "some_model_id"
 

@@ -1,6 +1,5 @@
 from collections import UserList
-from collections.abc import Iterable
-from typing import Any, Sequence
+from typing import Any
 
 from openai.types.chat import (
     ChatCompletionAssistantMessageParam,
