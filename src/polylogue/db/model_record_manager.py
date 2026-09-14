@@ -9,17 +9,17 @@ from polylogue.db.protocols.db_client import DBClient
 
 
 @final
-class ModelRecordManager:
-    def __init__[T](
-        self, client: DBClient[str], namespace: str = DB_MODELS_NAMESPACE
+class ModelRecordManager[KeyT, ValueT]:
+    def __init__(
+        self, client: DBClient[str, str], namespace: str = DB_MODELS_NAMESPACE
     ) -> None:
         self.namespace = namespace
-        self.client: DBClient[str] = client
+        self.client = client
 
     async def get(self, model_id: str) -> ModelRecord:
         json_data = await self.client.hget(self.namespace, model_id)
         if not json_data:
-            raise ValueError(f"No model record {model_id} was found")
+            raise KeyError(f"No model record {model_id} was found")
 
         return ModelRecord.model_validate_json(json_data)
 

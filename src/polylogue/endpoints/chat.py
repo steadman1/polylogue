@@ -45,7 +45,7 @@ async def create_chat_completion(
     model_record: ModelRecord = await db.get(model_id)
 
     manager: ModelCacheManager = request.app.state.model_manager
-    engine: TextToTextEngine = manager.get_or_load(model_id, model_record.path)
+    engine: TextToTextEngine = manager.get_or_load(model_record)
 
     if stream:
         # should be text/event-stream since were yielding json encoded ChatCompletionChunks

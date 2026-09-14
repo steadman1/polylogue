@@ -1,16 +1,12 @@
 from __future__ import annotations
 
 from collections.abc import Generator, Sequence
-from datetime import datetime
 from typing import final
 
-from openai.types.chat import ChatCompletionMessage, ChatCompletionMessageParam
-from openai.types.chat.chat_completion import ChatCompletion, Choice
-from openai.types.chat.chat_completion_chunk import ChatCompletionChunk, ChoiceDelta
-from openai.types.chat.chat_completion_chunk import Choice as ChunkChoice
+from openai.types.chat import ChatCompletionMessageParam
+from openai.types.chat.chat_completion import ChatCompletion
 from openai.types.chat.chat_completion_tool_param import ChatCompletionToolParam
 
-from polylogue.helpers.generator_check_last import generator_check_last
 from polylogue.inference.helpers.message_list import MessageList
 from polylogue.inference.protocols.inference_model import InferenceModel
 
