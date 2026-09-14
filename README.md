@@ -35,18 +35,18 @@ unit tests cover fastapi endpoints and inference components
 uv run pytest
 ```
 
-## Adding ModelRecords to Redis from the CLI
+## Managing ModelRecords from the CLI
 
 ### Get a ModelRecord
 
 ```bash
-uv run polylogue-cli get -m model_id
+uv run polylogue-cli db get -m model_id
 ```
 
 ### Save a ModelRecord
 
 ```bash
-uv run polylogue-cli save 
+uv run polylogue-cli db save 
     -m model_id                  # OR --model-id
     -p /path/to/model            # OR --path
     -n 128_000                   # OR --n-ctx
@@ -58,19 +58,70 @@ uv run polylogue-cli save -m model_id -p /path/to/model -n 128_000 -d "helpful d
 ### List all ModelRecords
 
 ```bash
-uv run polylogue-cli list
+uv run polylogue-cli db list
 ```
 
 ### Delete a ModelRecord
 
 ```bash
-uv run polylogue-cli delete -m model_id
+uv run polylogue-cli db delete -m model_id
 ```
 
 ### Help
 
 ```bash
 uv run polylogue-cli --help
+```
+
+## Managing API Keys from the CLI
+
+### Create an API Key
+
+```bash
+uv run polylogue-cli api create \
+    -o owner_id          # OR --owner-id
+    -n "key-name"        # OR --name (default: "default")
+    -r 100               # OR --rate-limit (default: 100 req/min)
+
+uv run polylogue-cli api create -o user_123 -n "dev-laptop" -r 120
+```
+The complete secret key (e.g., sk_live_...) is displayed only once upon creation. Store it immediately.
+
+### Get API Key Metadata
+
+```bash
+uv run polylogue-cli api get -k sk_live_key_id # OR --key-id
+```
+
+### Verify an API Key
+
+```bash
+uv run polylogue-cli api verify sk_live_key_id_secret_token
+```
+
+### List API Keys by Owner
+
+```bash
+uv run polylogue-cli api list -o owner_id # OR --owner-id
+```
+
+### List All Owners
+
+```bash
+uv run polylogue-cli api list-owners
+```
+
+### Delete an API Key
+
+```bash
+uv run polylogue-cli api delete -k sk_live_key_id # OR --key-id
+```
+
+
+### Help
+
+```bash 
+uv run polylogue-cli api --help
 ```
 
 ## Known Issues & Fixes
