@@ -24,6 +24,10 @@ API_KEY_PEPPER="your-api-key-pepper..."
 
 ```bash
 redis-server
+```
+
+```bash
+# in another terminal
 uv run fastapi dev src/polylogue/__init__.py --reload-dir src/polylogue --port 8080
 ```
 
