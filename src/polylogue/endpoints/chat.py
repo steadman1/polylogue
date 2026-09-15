@@ -37,7 +37,6 @@ async def create_chat_completion(
     db_client: RedisClientDep,
     api_key: AuthenticatedKey,
 ) -> ChatCompletion | StreamingResponse:
-    print(request)
     # owner = api_key.owner_id
     # limit = api_key.rate_limit
 

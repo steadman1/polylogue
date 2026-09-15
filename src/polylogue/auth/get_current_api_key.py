@@ -13,8 +13,6 @@ async def get_current_api_key(
     auth: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer_scheme)],
     db_client: RedisClientDep,
 ) -> APIKeyRecord:
-    print(auth)
-
     if auth is None or not auth.credentials:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -24,8 +22,6 @@ async def get_current_api_key(
 
     manager = APIKeyManager(db_client)
     record = await manager.verify_raw_key(auth.credentials)
-
-    print(record)
 
     if record is None:
         raise HTTPException(

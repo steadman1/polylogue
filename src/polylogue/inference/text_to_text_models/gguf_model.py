@@ -31,13 +31,16 @@ from openai.types.chat.chat_completion_message_tool_call import (
 
 from polylogue.constants import XML_TOOL_CALL_END, XML_TOOL_CALL_START
 from polylogue.inference.helpers.parse_xml_tool_calls import parse_xml_tool_calls
+from polylogue.inference.text_to_text_models.xml_tool_calling_model import (
+    XMLToolCallingModel,
+)
 
 if TYPE_CHECKING:
     from llama_cpp import Llama
 
 
 @final
-class GGUFModel:
+class GGUFModel(XMLToolCallingModel):
     def __init__(
         self,
         model_name: str,
@@ -82,14 +85,14 @@ class GGUFModel:
             raise RuntimeError("Model is not loaded. Call load() first.")
 
         response = self.model.create_chat_completion(
-            messages=list(messages),
-            tools=list(tools) if tools else None,
+            messages=list(messages),  # type: ignore
+            tools=list(tools) if tools else None,  # type: ignore
             tool_choice="auto" if tools else None,
             stream=False,
             stop=["<|im_end|>", "</s>"],
         )
 
-        choice_dict = response["choices"][0]["message"]
+        choice_dict = response["choices"][0]["message"]  # type: ignore
         content = choice_dict.get("content") or ""
         tool_calls: Sequence[ChatCompletionMessageToolCall] | None = None
 
@@ -109,9 +112,9 @@ class GGUFModel:
             content, tool_calls = parse_xml_tool_calls(content)
 
         return ChatCompletion(
-            id=response.get("id", f"chatcmpl-{uuid.uuid4().hex[:12]}"),
-            created=response.get("created", int(time.time())),
-            model=response.get("model", "gguf-model"),
+            id=response.get("id", f"chatcmpl-{uuid.uuid4().hex[:12]}"),  # type: ignore
+            created=response.get("created", int(time.time())),  # type: ignore
+            model=response.get("model", "gguf-model"),  # type: ignore
             object="chat.completion",
             choices=[
                 Choice(
@@ -138,8 +141,8 @@ class GGUFModel:
         created = int(time.time())
 
         stream = self.model.create_chat_completion(
-            messages=list(messages),
-            tools=list(tools) if tools else None,
+            messages=list(messages),  # type: ignore
+            tools=list(tools) if tools else None,  # type: ignore
             tool_choice="auto" if tools else None,
             stream=True,
         )
@@ -150,11 +153,11 @@ class GGUFModel:
         tool_call_emitted = False
 
         for chunk in stream:
-            choice = chunk["choices"][0]
-            delta = choice.get("delta", {})
+            choice = chunk["choices"][0]  # type: ignore
+            delta = choice.get("delta", {})  # type: ignore
 
             # 1. Native llama-cpp handled tool calls pass-through
-            if "tool_calls" in delta and delta["tool_calls"]:
+            if delta.get("tool_calls"):
                 tool_call_emitted = True
                 yield ChatCompletionChunk.model_validate(chunk)
                 continue
@@ -255,111 +258,3 @@ class GGUFModel:
                     )
                 ],
             )
-
-    def _yield_token_as_plaintext(
-        self, token: str, completion_id: str, created: int
-    ) -> Generator[ChatCompletionChunk, None, None]:
-        yield ChatCompletionChunk(
-            id=completion_id,
-            created=created,
-            model=self.model_name,
-            object="chat.completion.chunk",
-            choices=[
-                ChunkChoice(
-                    index=0,
-                    delta=ChoiceDelta(content=token),
-                    finish_reason=None,
-                )
-            ],
-        )
-
-    def _yield_tool_call(
-        self, call: ChatCompletionMessageToolCall, completion_id: str, created: int
-    ) -> Generator[ChatCompletionChunk, None, None]:
-        # announce tool call
-        yield ChatCompletionChunk(
-            id=completion_id,
-            created=created,
-            model=self.model_name,
-            object="chat.completion.chunk",
-            choices=[
-                ChunkChoice(
-                    index=0,
-                    delta=ChoiceDelta(
-                        role="assistant",
-                        tool_calls=[
-                            ChoiceDeltaToolCall(
-                                index=0,
-                                id=call.id,
-                                type="function",
-                                function=ChoiceDeltaToolCallFunction(
-                                    name=call.function.name,
-                                    arguments="",
-                                ),
-                            )
-                        ],
-                    ),
-                    finish_reason=None,
-                )
-            ],
-        )
-
-        # yield arguments
-        yield ChatCompletionChunk(
-            id=completion_id,
-            created=created,
-            model=self.model_name,
-            object="chat.completion.chunk",
-            choices=[
-                ChunkChoice(
-                    index=0,
-                    delta=ChoiceDelta(
-                        tool_calls=[
-                            ChoiceDeltaToolCall(
-                                index=0,
-                                function=ChoiceDeltaToolCallFunction(
-                                    arguments=call.function.arguments
-                                ),
-                            )
-                        ]
-                    ),
-                    finish_reason=None,
-                )
-            ],
-        )
-
-        # terminate tool call
-        yield ChatCompletionChunk(
-            id=completion_id,
-            created=created,
-            model=self.model_name,
-            object="chat.completion.chunk",
-            choices=[
-                ChunkChoice(
-                    index=0,
-                    delta=ChoiceDelta(),
-                    finish_reason="tool_calls",
-                )
-            ],
-        )
-
-    def _message_check_contents_for_target_fragment(
-        self, target: str, message: str
-    ) -> tuple[int, int] | None:
-        if not message or not target:
-            return None
-
-        # Step 1: Check for complete occurrence anywhere in message
-        target_len = len(target)
-        for i in range(len(message) - target_len + 1):
-            if message[i : i + target_len] == target:
-                return (i, i + target_len)
-
-        # Step 2: Check if the tail of message matches a prefix of target (no chars after)
-        max_overlap = min(len(message), target_len - 1)
-        for length in range(max_overlap, 0, -1):
-            start = len(message) - length
-            if message[start:] == target[:length]:
-                return (start, len(message))
-
-        return None
