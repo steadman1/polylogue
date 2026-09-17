@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 from fastapi import Request
 from fastapi.responses import StreamingResponse
 from openai.types.chat.chat_completion import ChatCompletion
@@ -13,6 +15,7 @@ from polylogue.helpers.build_prefix import build_prefix
 from polylogue.helpers.get_or_HTTPException import *
 from polylogue.inference.model_cache_manager import ModelCacheManager
 from polylogue.inference.text_to_text_engine import TextToTextEngine
+from polylogue.inference.text_to_text_factory import TextToTextFactory
 
 # only want to store completions for 3 (?) days if "store=true"
 
@@ -49,8 +52,11 @@ async def create_chat_completion(
     db = ModelRecordManager(db_client)
     model_record: ModelRecord = await db.get(model_id)
 
-    manager: ModelCacheManager = request.app.state.model_manager
-    engine: TextToTextEngine = manager.get_or_load(model_record)
+    # manager: ModelCacheManager = request.app.state.model_manager
+    # engine: TextToTextEngine = manager.get_or_load(model_record)
+
+    model = TextToTextFactory.from_record(model_record)
+    engine = TextToTextEngine(model, model_id)
 
     if stream:
         # should be text/event-stream since were yielding json encoded ChatCompletionChunks

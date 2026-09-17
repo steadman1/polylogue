@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from polylogue.constants import DEFAULT_N_CTX, GGUF_TARGET, MLX_TARGET
 from polylogue.db.model_record import ModelRecord
 from polylogue.helpers.get_supported_model_types import (
@@ -11,35 +13,41 @@ from polylogue.inference.text_to_text_models.mlx_model import MLXModel
 
 class TextToTextFactory:
     @staticmethod
-    def from_path(model_record: ModelRecord) -> InferenceModel:
-        model_name: str = model_record.path.parts[-1]
+    def from_record(model_record: ModelRecord) -> InferenceModel:
+        return TextToTextFactory.from_path(
+            model_record.path, model_record.maximum_n_ctx
+        )
+
+    @staticmethod
+    def from_path(
+        model_path: Path, maximum_n_ctx: int | None = 128_000
+    ) -> InferenceModel:
+        model_id: str = model_path.parts[-1]
         # need to decide whether to use mlx, llama, ... here based on file type/directory details
-        if model_record.path.is_file() and model_name.endswith(GGUF_TARGET):
+        if model_path.is_file() and model_id.endswith(GGUF_TARGET):
             # *.gguf files are handled by llama cpp
             if GGUFModel in get_supported_model_types():
                 return GGUFModel(
-                    model_name.removesuffix(GGUF_TARGET),
-                    model_record.path,
-                    model_record.maximum_n_ctx
-                    if model_record.maximum_n_ctx is not None
-                    else DEFAULT_N_CTX,
+                    model_id.removesuffix(GGUF_TARGET),
+                    model_path,
+                    128_000,
                 )
             else:
                 raise ModelTypeUnsupportedError(
                     "Dependecy(s) required to run GGUF models are not available"
                 )
 
-        if model_record.path.is_dir() and (model_record.path / MLX_TARGET).is_file():
+        if model_path.is_dir() and (model_path / MLX_TARGET).is_file():
             # mlx should check for a config.json and safetensors in target directory
             if MLXModel in get_supported_model_types():
-                return MLXModel(model_name, model_record.path)
+                return MLXModel(model_id, model_path)
             else:
                 raise ModelTypeUnsupportedError(
                     "Dependecy(s) required to run MLX models are not available"
                 )
 
         # don't show this directly on front-end since it would expose path details
-        raise ModelResolutionError(f"Model couldn't be loaded from {model_record.path}")
+        raise ModelResolutionError(f"Model couldn't be loaded from {model_path}")
 
 
 class ModelResolutionError(Exception):

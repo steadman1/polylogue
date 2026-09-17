@@ -3,7 +3,7 @@ import time
 import uuid
 from collections.abc import Generator, Sequence
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, final
+from typing import Any, final
 
 from openai.types.chat import (
     ChatCompletion,
@@ -13,34 +13,22 @@ from openai.types.chat import (
     ChatCompletionToolParam,
 )
 from openai.types.chat.chat_completion import Choice
-from openai.types.chat.chat_completion_chunk import (
-    Choice as ChunkChoice,
-)
-from openai.types.chat.chat_completion_chunk import (
-    ChoiceDelta,
-)
-from openai.types.chat.chat_completion_message_tool_call import (
-    ChatCompletionMessageToolCall,
-)
+from openai.types.chat.chat_completion_chunk import Choice as ChunkChoice
+from openai.types.chat.chat_completion_chunk import ChoiceDelta
 
-from polylogue.constants import XML_TOOL_CALL_END, XML_TOOL_CALL_START
 from polylogue.inference.chat_templates.universal import CHATML_TEMPLATE
-from polylogue.inference.helpers.parse_xml_tool_calls import parse_xml_tool_calls
-from polylogue.inference.text_to_text_models.xml_tool_calling_model import (
-    XMLToolCallingModel,
-)
 
 
-# Models should only be created usin a factory
+# Models should only be created using a factory
 @final
-class MLXModel(XMLToolCallingModel):
+class MLXModel:
     def __init__(
         self,
-        model_name: str,
+        model_id: str,
         model_path: Path,
-        max_tokens: int = 1,
+        max_tokens: int = 512,
     ) -> None:
-        self.model_name = model_name
+        self.model_id = model_id
         self.model_path = model_path
         self.max_tokens = max_tokens
 
@@ -79,7 +67,7 @@ class MLXModel(XMLToolCallingModel):
             add_generation_prompt=True,
         )
 
-        raw_output: str = generate(
+        response: str = generate(
             self.model,
             self.tokenizer,
             prompt=prompt,
@@ -87,31 +75,8 @@ class MLXModel(XMLToolCallingModel):
             verbose=False,
         )
 
-        content: str = raw_output
-        tool_calls: Sequence[ChatCompletionMessageToolCall] | None = None
-
-        if XML_TOOL_CALL_START in raw_output:
-            cleaned_content, parsed_tool_calls = parse_xml_tool_calls(raw_output)
-            content = cleaned_content if cleaned_content is not None else ""
-            tool_calls = parsed_tool_calls
-
-        return ChatCompletion(
-            id=f"chatcmpl-{uuid.uuid4().hex[:12]}",
-            created=int(time.time()),
-            model=self.model_name,
-            object="chat.completion",
-            choices=[
-                Choice(
-                    index=0,
-                    message=ChatCompletionMessage(
-                        role="assistant",
-                        content=content or None,
-                        tool_calls=list(tool_calls) if tool_calls else [],
-                    ),
-                    finish_reason="tool_calls" if tool_calls else "stop",
-                )
-            ],
-        )
+        (id, time) = self._get_id_and_created()
+        return self._create_chat_completion(response, id, time)
 
     def stream_generate(
         self,
@@ -121,10 +86,8 @@ class MLXModel(XMLToolCallingModel):
         if self.model is None or self.tokenizer is None:
             raise RuntimeError("Model is not loaded. Call load() first.")
 
+        import mlx.core as mlx_core
         from mlx_lm import stream_generate
-
-        completion_id = f"chatcmpl-{uuid.uuid4().hex[:12]}"
-        created = int(time.time())
 
         prompt = self.tokenizer.apply_chat_template(
             list(messages),
@@ -133,106 +96,55 @@ class MLXModel(XMLToolCallingModel):
             add_generation_prompt=True,
         )
 
-        stream = stream_generate(
-            self.model,
-            self.tokenizer,
-            prompt=prompt,
-            max_tokens=self.max_tokens,
-        )
-
-        tool_call_buffer = ""
-        tool_call_full_content = ""
-        tool_call_active = False
-        tool_call_emitted = False
-
-        for chunk in stream:
-            token: str = getattr(chunk, "text", "")
-            if not token:
-                continue
-
-            # 1. Plain completion passthrough if no tools were supplied
-            if not tools:
-                yield from self._yield_token_as_plaintext(token, completion_id, created)
-                continue
-
-            new_token_buffer = tool_call_buffer + token
-
-            # 2. Look for tool call opening tag
-            if not tool_call_active:
-                match = self._message_check_contents_for_target_fragment(
-                    XML_TOOL_CALL_START, new_token_buffer
-                )
-                if match:
-                    start_idx, end_idx = match
-                    pre_text = new_token_buffer[:start_idx]
-                    if pre_text:
-                        yield from self._yield_token_as_plaintext(
-                            pre_text, completion_id, created
-                        )
-
-                    matched_fragment = new_token_buffer[start_idx:end_idx]
-                    if matched_fragment == XML_TOOL_CALL_START:
-                        tool_call_active = True
-                        tool_call_buffer = ""
-                        tool_call_full_content = ""
-                    else:
-                        tool_call_buffer = matched_fragment
-                else:
-                    yield from self._yield_token_as_plaintext(
-                        new_token_buffer, completion_id, created
-                    )
-                    tool_call_buffer = ""
-
-            # 3. Active tool call: capture arguments and seek closing tag
-            else:
-                match = self._message_check_contents_for_target_fragment(
-                    XML_TOOL_CALL_END, new_token_buffer
-                )
-                if match:
-                    start_idx, end_idx = match
-                    matched_fragment = new_token_buffer[start_idx:end_idx]
-
-                    if matched_fragment == XML_TOOL_CALL_END:
-                        tool_call_full_content += new_token_buffer[:start_idx]
-
-                        _, parsed_calls = parse_xml_tool_calls(
-                            f"{XML_TOOL_CALL_START}{tool_call_full_content}{XML_TOOL_CALL_END}"
-                        )
-                        if parsed_calls:
-                            tool_call_emitted = True
-                            yield from self._yield_tool_call(
-                                parsed_calls[0], completion_id, created
-                            )
-
-                        tool_call_full_content = ""
-                        tool_call_buffer = ""
-                        tool_call_active = False
-                    else:
-                        tool_call_full_content += new_token_buffer[:start_idx]
-                        tool_call_buffer = matched_fragment
-                else:
-                    tool_call_full_content += new_token_buffer
-                    tool_call_buffer = ""
-
-        # 4. Flush trailing characters that did not form complete tags
-        trailing = tool_call_buffer or (
-            tool_call_full_content if not tool_call_emitted else ""
-        )
-        if trailing and not tool_call_emitted:
-            yield from self._yield_token_as_plaintext(trailing, completion_id, created)
-
-        # 5. Emit terminal chunk if finish_reason="tool_calls" was not sent
-        if not tool_call_emitted:
-            yield ChatCompletionChunk(
-                id=completion_id,
-                created=created,
-                model=self.model_name,
-                object="chat.completion.chunk",
-                choices=[
-                    ChunkChoice(
-                        index=0,
-                        delta=ChoiceDelta(),
-                        finish_reason="stop",
-                    )
-                ],
+        with mlx_core.stream(mlx_core.new_thread_local_stream(mlx_core.gpu)):
+            stream = stream_generate(
+                self.model,
+                self.tokenizer,
+                prompt=prompt,
+                max_tokens=self.max_tokens,
             )
+
+            (id, _) = self._get_id_and_created()
+            for index, chunk in enumerate(stream):
+                yield self._create_chat_completion_chunk(chunk.text, index, id)
+
+    def _get_id_and_created(self) -> tuple[str, int]:
+        id = f"chatcmpl-{uuid.uuid4().hex[:12]}"
+        created = int(time.time())
+
+        return (id, created)
+
+    def _create_chat_completion(
+        self, content: str, id: str, created: int
+    ) -> ChatCompletion:
+        return ChatCompletion(
+            id=id,
+            created=created,
+            choices=[
+                Choice(
+                    finish_reason="stop",
+                    index=0,
+                    message=ChatCompletionMessage(role="assistant", content=content),
+                )
+            ],
+            model=self.model_id,
+            object="chat.completion",
+        )
+
+    def _create_chat_completion_chunk(
+        self, content: str, index: int, id: str
+    ) -> ChatCompletionChunk:
+
+        created = int(time.time())
+
+        return ChatCompletionChunk(
+            id=id,
+            created=created,
+            choices=[
+                ChunkChoice(
+                    index=index, delta=ChoiceDelta(content=content, role="assistant")
+                )
+            ],
+            model=self.model_id,
+            object="chat.completion.chunk",
+        )

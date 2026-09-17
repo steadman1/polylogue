@@ -22,7 +22,7 @@ class ModelCacheManager:
                 old_model.destroy()
 
         # 3. Load model into memory
-        model: InferenceModel = TextToTextFactory.from_path(model_record)
+        model: InferenceModel = TextToTextFactory.from_record(model_record)
         if hasattr(model, "load"):
             model.load()
 

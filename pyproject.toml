@@ -44,3 +44,22 @@ addopts = "-m 'not slow'"
 markers = [
     "slow: marks tests as slow (deselected by default)",
 ]
+
+[tool.basedpyright]
+include = ["src", "tests"]
+exclude = [
+    "**/.venv",
+    "**/venv",
+    "**/__pycache__",
+    "**/.pytest_cache",
+    "**/build",
+    "**/dist",
+]
+typeCheckingMode = "basic"
+reportUnusedImport = "none"
+reportUnusedVariable = "none"
+reportMissingTypeStubs = "none"
+
+[[tool.basedpyright.executionEnvironments]]
+root = "src"
+extraPaths = []

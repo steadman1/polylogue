@@ -3,6 +3,7 @@ from typing import Protocol, runtime_checkable
 
 from openai.types.chat import (
     ChatCompletion,
+    ChatCompletionChunk,
     ChatCompletionMessageParam,
     ChatCompletionToolParam,
 )
@@ -16,12 +17,12 @@ class InferenceModel(Protocol):
 
     def generate(
         self,
-        messages: list[ChatCompletionMessageParam],
+        messages: Sequence[ChatCompletionMessageParam],
         tools: Sequence[ChatCompletionToolParam] | None,
     ) -> ChatCompletion: ...
 
     def stream_generate(
         self,
-        messages: list[ChatCompletionMessageParam],
+        messages: Sequence[ChatCompletionMessageParam],
         tools: Sequence[ChatCompletionToolParam] | None,
-    ) -> Generator[ChatCompletion, None, None]: ...
+    ) -> Generator[ChatCompletionChunk, None, None]: ...
