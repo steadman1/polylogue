@@ -8,9 +8,13 @@ from openai.types.chat import (
     ChatCompletionToolParam,
 )
 
+from polylogue.inference.chat_templates.chat_template import ChatTemplateConstants
+
 
 @runtime_checkable
 class InferenceModel(Protocol):
+    constants: ChatTemplateConstants
+
     def load(self) -> None: ...
 
     def destroy(self) -> None: ...

@@ -60,8 +60,15 @@ async def create_chat_completion(
 
     if stream:
         # should be text/event-stream since were yielding json encoded ChatCompletionChunks
-        return StreamingResponse(
-            engine.stream_generate(messages, tools), media_type="text/event-stream"
-        )
+        async def sse_wrapper():
+            async for chunk in engine.stream_generate(
+                messages=messages,
+                tools=tools,
+                request=request,
+            ):
+                yield f"data: {chunk.model_dump_json()}\n\n"
+            yield "data: [DONE]\n\n"
 
-    return engine.generate(messages, tools)
+        return StreamingResponse(sse_wrapper(), media_type="text/event-stream")
+
+    return await engine.generate(messages, tools)

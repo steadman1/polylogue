@@ -22,16 +22,26 @@ def client() -> Generator[TestClient, None, None]:
         owned_by="",
         path=MLX_MODEL_PATH,
     )
-    _ = asyncio.run(
-        mock_db.hset(DB_MODELS_NAMESPACE, MOCK_MODEL_ID, mock_model.model_dump_json())
-    )
+
+    # Run in an explicit fresh loop to avoid clashes with pytest loops
+    temp_loop = asyncio.new_event_loop()
+    try:
+        temp_loop.run_until_complete(
+            mock_db.hset(
+                DB_MODELS_NAMESPACE, MOCK_MODEL_ID, mock_model.model_dump_json()
+            )
+        )
+    finally:
+        temp_loop.close()
 
     app.dependency_overrides[get_db] = lambda: mock_db
 
-    with TestClient(app) as test_client:
+    # Do not enter 'with TestClient(app):' unless you explicitly want to run full app lifespan
+    test_client = TestClient(app)
+    try:
         yield test_client
-
-    app.dependency_overrides.clear()
+    finally:
+        app.dependency_overrides.clear()
 
 
 def pytest_addoption(parser):
@@ -45,7 +55,6 @@ def pytest_addoption(parser):
 
 def pytest_collection_modifyitems(config, items):
     if config.getoption("--all"):
-        # If the flag is passed, remove the skip markers dynamically
         for item in items:
             if (
                 item.get_closest_marker("skip")

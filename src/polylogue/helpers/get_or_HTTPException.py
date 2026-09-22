@@ -1,6 +1,5 @@
 from typing import Any
 
-from fastapi import HTTPException, status
 from pydantic import BaseModel, ConfigDict
 
 
@@ -19,23 +18,15 @@ class ValidatedCompletionCreateParams(BaseModel):
         return default
 
     def get_or_422(self, field: str) -> Any:
-        """Retrieves a field value or raises a standard FastAPI 422 error."""
+        """Retrieves a field value or raises a 422 error."""
         value = getattr(self, field, None)
-        if value is None:
-            # Fallback check for dynamic extra dictionary fields
-            if self.model_extra and field in self.model_extra:
-                value = self.model_extra[field]
+        if value is None and self.model_extra and field in self.model_extra:
+            value = self.model_extra[field]
 
         if value is None:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-                detail=[
-                    {
-                        "type": "missing",
-                        "loc": ["body", field],
-                        "msg": f"Field required: '{field}'",
-                        "input": self.model_dump(),
-                    }
-                ],
-            )
+            raise HTTPException(f"Field {value} is undefined")
         return value
+
+
+class HTTPException(Exception):
+    pass

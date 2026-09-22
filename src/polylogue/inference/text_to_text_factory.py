@@ -20,7 +20,7 @@ class TextToTextFactory:
 
     @staticmethod
     def from_path(
-        model_path: Path, maximum_n_ctx: int | None = 128_000
+        model_path: Path, maximum_n_ctx: int | None = DEFAULT_N_CTX
     ) -> InferenceModel:
         model_id: str = model_path.parts[-1]
         # need to decide whether to use mlx, llama, ... here based on file type/directory details
@@ -30,7 +30,7 @@ class TextToTextFactory:
                 return GGUFModel(
                     model_id.removesuffix(GGUF_TARGET),
                     model_path,
-                    128_000,
+                    maximum_n_ctx,
                 )
             else:
                 raise ModelTypeUnsupportedError(

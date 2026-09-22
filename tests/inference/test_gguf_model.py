@@ -26,7 +26,7 @@ def test_conforms_protocol_gguf_model() -> None:
 
 def test_invalid_gguf_model() -> None:
     model_path = Path("path/with/no/model")
-    model = GGUFModel(model_path)
+    model = GGUFModel("", model_path)
 
     with pytest.raises(ValueError):
         model.load()
@@ -35,7 +35,7 @@ def test_invalid_gguf_model() -> None:
 @pytest.mark.slow
 def test_gguf_model() -> None:
     model_path = GGUF_MODEL_PATH
-    model = GGUFModel(model_path)
+    model = GGUFModel("", model_path)
 
     model.load()
     response = model.generate(MOCK_MESSAGES)
@@ -50,7 +50,7 @@ def test_gguf_model() -> None:
 @pytest.mark.slow
 def test_gguf_model_streaming() -> None:
     model_path = GGUF_MODEL_PATH
-    model = GGUFModel(model_path)
+    model = GGUFModel("", model_path)
 
     model.load()
     stream = model.stream_generate(MOCK_MESSAGES)

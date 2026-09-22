@@ -18,7 +18,7 @@ if not MLXModel in get_supported_model_types():
 
 def test_conforms_protocol_mlx_model() -> None:
     model_path = Path("path/with/no/model")
-    model = MLXModel(model_path)
+    model = MLXModel("", model_path)
 
     assert isinstance(model, InferenceModel)
     assert_implements_protocol(MLXModel, InferenceModel)
@@ -26,7 +26,7 @@ def test_conforms_protocol_mlx_model() -> None:
 
 def test_invalid_mlx_model() -> None:
     model_path = Path("path/with/no/model")
-    model = MLXModel(model_path)
+    model = MLXModel("", model_path)
 
     with pytest.raises(ValueError):
         model.load()
@@ -35,12 +35,16 @@ def test_invalid_mlx_model() -> None:
 @pytest.mark.slow
 def test_mlx_model() -> None:
     model_path = MLX_MODEL_PATH
-    model = MLXModel(model_path)
+    model = MLXModel("", model_path)
 
     model.load()
+    messages = ChatCompletionMessageParam
     response = model.generate(MOCK_MESSAGES)
 
-    assert len(response) > 0
+    assert len(response.choices) > 0
+
+    assert response.choices[0].message.content is not None
+    assert len(response.choices[0].message.content) > 0
 
     model.destroy()
 
@@ -52,7 +56,7 @@ def test_mlx_model() -> None:
 @pytest.mark.slow
 def test_mlx_model_streaming() -> None:
     model_path = MLX_MODEL_PATH
-    model = MLXModel(model_path)
+    model = MLXModel("", model_path)
 
     model.load()
     stream = model.stream_generate(MOCK_MESSAGES)

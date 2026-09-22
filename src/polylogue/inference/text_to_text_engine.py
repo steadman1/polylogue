@@ -1,10 +1,14 @@
 from __future__ import annotations
 
+import asyncio
+import threading
 import time
 import uuid
-from collections.abc import Generator, Sequence
+from collections.abc import AsyncGenerator, Generator, Sequence
+from concurrent.futures import ThreadPoolExecutor
 from typing import final
 
+from fastapi import Request
 from openai.types.chat import (
     ChatCompletion,
     ChatCompletionChunk,
@@ -26,325 +30,283 @@ from openai.types.chat.chat_completion_message_tool_call import (
     Function,
 )
 
-from polylogue.constants import XML_TOOL_CALL_END, XML_TOOL_CALL_START
+from polylogue.inference.chat_templates.chat_template import ChatTemplateConstants
 from polylogue.inference.helpers.message_list import MessageList
-from polylogue.inference.helpers.parse_xml_tool_calls import (
-    parse_xml_tool_calls,
-)
+from polylogue.inference.helpers.stream_tool_buffer import StreamToolCallBuffer
+from polylogue.inference.helpers.tool_call_parser import ToolCallParser
 from polylogue.inference.protocols.inference_model import InferenceModel
 
 
 @final
 class TextToTextEngine:
-    def __init__(self, model: InferenceModel, model_id: str):
-        # to support dependecy injection, we need to take in an object
-        # that will handle choosing the model
-        self.model: InferenceModel = model
-        self.model_id: str = model_id
+    def __init__(self, model: InferenceModel, model_id: str) -> None:
+        self.model = model
+        self.model_id = model_id
+        self._is_loaded = False
+        self._load_lock = asyncio.Lock()
+        self._executor = ThreadPoolExecutor(
+            max_workers=1, thread_name_prefix="engine-worker"
+        )
 
-        self.model.load()
+    async def load(self) -> None:
+        """Ensures the model and thread-local contexts are loaded on the executor."""
+        if self._is_loaded:
+            return
 
-    def destroy(self) -> None:
-        self.model.destroy()
+        async with self._load_lock:
+            if not self._is_loaded:
+                loop = asyncio.get_running_loop()
+                await loop.run_in_executor(self._executor, self.model.load)
+                self._is_loaded = True
 
-    def clean_messages(
-        self, messages: Sequence[ChatCompletionMessageParam]
-    ) -> list[ChatCompletionMessageParam]:
+        print(self.model.constants.tool_call_start, self.model.constants.tool_format)
 
-        return MessageList(messages).clean()
+    async def destroy(self) -> None:
+        """Releases model parameters and halts the worker thread."""
+        async with self._load_lock:
+            if self._is_loaded:
+                loop = asyncio.get_running_loop()
+                await loop.run_in_executor(self._executor, self.model.destroy)
+                self._is_loaded = False
+        self._executor.shutdown(wait=False)
 
-    # generation should format the raw dictionary into an openai Completion
-    def generate(
+    async def generate(
         self,
         messages: Sequence[ChatCompletionMessageParam],
         tools: Sequence[ChatCompletionToolParam] | None = None,
     ) -> ChatCompletion:
-        cleaned_messages: list[ChatCompletionMessageParam] = self.clean_messages(
-            messages
+        await self.load()
+        loop = asyncio.get_running_loop()
+        return await loop.run_in_executor(
+            self._executor, self._execute_generate, messages, tools
         )
 
-        response = self.model.generate(cleaned_messages, tools)
+    def _execute_generate(
+        self,
+        messages: Sequence[ChatCompletionMessageParam],
+        tools: Sequence[ChatCompletionToolParam] | None,
+    ) -> ChatCompletion:
+        cleaned = MessageList(messages).clean()
+        response = self.model.generate(cleaned, tools)
+        constants = getattr(self.model, "constants", None) or ChatTemplateConstants()
 
-        choice_dict = response["choices"][0]["message"]  # type: ignore
-        content = choice_dict.get("content") or ""
-        tool_calls: Sequence[ChatCompletionMessageToolCall] | None = None
+        choice = response.choices[0].message
+        content = choice.content
+        tool_calls: list[ChatCompletionMessageToolCall] = []
 
-        if choice_dict.get("tool_calls"):
+        # 1. Native engine tool calls
+        if choice.tool_calls:
             tool_calls = [
                 ChatCompletionMessageToolCall(
-                    id=tool_call["id"],
+                    id=tc.id,
                     type="function",
                     function=Function(
-                        name=tool_call["function"]["name"],
-                        arguments=tool_call["function"]["arguments"],
+                        name=tc.function.name,  # type: ignore
+                        arguments=tc.function.arguments,  # type: ignore
                     ),
                 )
-                for tool_call in choice_dict["tool_calls"]
+                for tc in choice.tool_calls
             ]
-        elif "<tool_call>" in content:
-            content, tool_calls = parse_xml_tool_calls(content)
+        # 2. Text-formatted tool calls (XML, Gemma, Llama, Mistral)
+        elif content and constants.tool_call_start in content:
+            print(content)
+            content, tool_calls = ToolCallParser.parse(content, constants.tool_format)
 
         return ChatCompletion(
-            id=response.get("id", f"chatcmpl-{uuid.uuid4().hex[:12]}"),  # type: ignore
-            created=response.get("created", int(time.time())),  # type: ignore
-            model=response.get("model", "gguf-model"),  # type: ignore
+            id=response.id or f"chatcmpl-{uuid.uuid4().hex[:12]}",
+            created=response.created or int(time.time()),
+            model=response.model or self.model_id,
             object="chat.completion",
             choices=[
                 Choice(
                     index=0,
                     message=ChatCompletionMessage(
                         role="assistant",
-                        content=choice_dict.get("content"),
-                        tool_calls=list(tool_calls) if tool_calls else [],
+                        content=content,
+                        tool_calls=tool_calls or None,  # type: ignore
                     ),
                     finish_reason="tool_calls" if tool_calls else "stop",
                 )
             ],
         )
 
-    def stream_generate(
+    async def stream_generate(
         self,
         messages: Sequence[ChatCompletionMessageParam],
         tools: Sequence[ChatCompletionToolParam] | None = None,
-    ) -> Generator[str, None, None]:
-        cleaned_messages: list[ChatCompletionMessageParam] = self.clean_messages(
-            messages
+        request: Request | None = None,
+    ) -> AsyncGenerator[ChatCompletionChunk, None]:
+        await self.load()
+
+        loop = asyncio.get_running_loop()
+        queue: asyncio.Queue[ChatCompletionChunk | Exception | object] = asyncio.Queue()
+        stop_event = threading.Event()
+
+        worker_future = loop.run_in_executor(
+            self._executor,
+            self._worker_stream_task,
+            messages,
+            tools,
+            loop,
+            queue,
+            stop_event,
         )
 
-        stream = self.model.stream_generate(cleaned_messages, tools)
+        try:
+            while True:
+                if request is not None and await request.is_disconnected():
+                    stop_event.set()
+                    break
 
+                item = await queue.get()
+                if isinstance(item, Exception):
+                    raise item
+                if not isinstance(item, ChatCompletionChunk):
+                    break
+
+                yield item
+                queue.task_done()
+        finally:
+            stop_event.set()
+            await worker_future
+
+    def _worker_stream_task(
+        self,
+        messages: Sequence[ChatCompletionMessageParam],
+        tools: Sequence[ChatCompletionToolParam] | None,
+        loop: asyncio.AbstractEventLoop,
+        queue: asyncio.Queue,
+        stop_event: threading.Event,
+    ) -> None:
+        sentinel = object()
+        try:
+            cleaned = MessageList(messages).clean()
+            raw_stream = self.model.stream_generate(cleaned, tools)
+            chunk_stream = self._transform_stream(raw_stream, tools, stop_event)
+
+            for chunk in chunk_stream:
+                if stop_event.is_set():
+                    break
+                loop.call_soon_threadsafe(queue.put_nowait, chunk)
+        except Exception as exc:
+            loop.call_soon_threadsafe(queue.put_nowait, exc)
+        finally:
+            loop.call_soon_threadsafe(queue.put_nowait, sentinel)
+
+    def _transform_stream(
+        self,
+        stream: Generator[ChatCompletionChunk, None, None],
+        tools: Sequence[ChatCompletionToolParam] | None,
+        stop_event: threading.Event,
+    ) -> Generator[ChatCompletionChunk, None, None]:
+        """Transforms raw tokens into structured text chunks and tool call announcements."""
         completion_id = f"chatcmpl-{uuid.uuid4().hex[:12]}"
         created = int(time.time())
-
-        tool_call_buffer = ""
-        tool_call_full_content = ""
-        tool_call_active = False
-        tool_call_emitted = False
+        constants = getattr(self.model, "constants", None) or ChatTemplateConstants()
+        buffer = StreamToolCallBuffer(constants)
 
         for chunk in stream:
-            choice = chunk.choices[0]  # type: ignore
-            delta = choice.delta  # type: ignore
+            if stop_event.is_set():
+                return
 
-            # 1. Native llama-cpp handled tool calls pass-through
+            delta = chunk.choices[0].delta
+
+            # 1. Native pass-through
             if delta.tool_calls:
-                tool_call_emitted = True
-                yield self._serialize_chunk(ChatCompletionChunk.model_validate(chunk))
+                buffer.emitted_call = True
+                yield chunk
                 continue
 
-            token: str = delta.content or ""
+            token = delta.content or ""
             if not token:
                 continue
 
-            # 2. Plain completion passthrough if no tools were supplied
+            # 2. Passthrough if no tools registered
             if not tools:
-                yield self._return_chunk_as_plain_text(token, completion_id, created)
+                yield self._build_chunk(
+                    completion_id, created, ChoiceDelta(content=token)
+                )
                 continue
 
-            new_token_buffer = tool_call_buffer + token
-
-            # 3. Look for tool call opening tag
-            if not tool_call_active:
-                match = self._message_check_contents_for_target_fragment(
-                    XML_TOOL_CALL_START, new_token_buffer
-                )
-                if match:
-                    start_idx, end_idx = match
-                    # Yield any text that appeared BEFORE the tool call tag
-                    pre_text = new_token_buffer[:start_idx]
-                    if pre_text:
-                        yield from self._return_chunk_as_plain_text(
-                            pre_text, completion_id, created
-                        )
-
-                    matched_fragment = new_token_buffer[start_idx:end_idx]
-                    if matched_fragment == XML_TOOL_CALL_START:
-                        tool_call_active = True
-                        tool_call_buffer = ""
-                        tool_call_full_content = ""
-                    else:
-                        # Keep holding the partial prefix (e.g. "<tool")
-                        tool_call_buffer = matched_fragment
-                else:
-                    # No tag match or prefix found: flush entire buffer as plaintext
-                    yield self._return_chunk_as_plain_text(
-                        new_token_buffer, completion_id, created
+            # 3. Process token via the tool buffer state machine
+            for event in buffer.process_token(token):
+                if isinstance(event, str):
+                    yield self._build_chunk(
+                        completion_id, created, ChoiceDelta(content=event)
                     )
-                    tool_call_buffer = ""
+                elif isinstance(event, list):
+                    for call in event:
+                        yield from self._yield_tool_call(call, completion_id, created)
 
-            # 4. In active tool call: look for closing tag
-            else:
-                match = self._message_check_contents_for_target_fragment(
-                    XML_TOOL_CALL_END, new_token_buffer
-                )
-                if match:
-                    start_idx, end_idx = match
-                    matched_fragment = new_token_buffer[start_idx:end_idx]
-
-                    if matched_fragment == XML_TOOL_CALL_END:
-                        # Append parameter content up to </tool_call>
-                        tool_call_full_content += new_token_buffer[:start_idx]
-
-                        _, tool_calls = parse_xml_tool_calls(
-                            f"{XML_TOOL_CALL_START}{tool_call_full_content}{XML_TOOL_CALL_END}"
-                        )
-                        if tool_calls:
-                            tool_call_emitted = True
-                            yield from self._yield_tool_call(
-                                tool_calls[0], completion_id, created
-                            )
-
-                        tool_call_full_content = ""
-                        tool_call_buffer = ""
-                        tool_call_active = False
-                    else:
-                        # Incomplete closing tag fragment: buffer it
-                        tool_call_full_content += new_token_buffer[:start_idx]
-                        tool_call_buffer = matched_fragment
-                else:
-                    # Still inside parameters
-                    tool_call_full_content += new_token_buffer
-                    tool_call_buffer = ""
-
-        # 5. Flush any trailing buffered characters that never became tags
-        trailing = tool_call_buffer or (
-            tool_call_full_content if not tool_call_emitted else ""
-        )
-        if trailing and not tool_call_emitted:
-            yield self._return_chunk_as_plain_text(trailing, completion_id, created)
-
-        # 6. Emit terminal chunk ONLY if finish_reason="tool_calls" was not already sent
-        if not tool_call_emitted:
-            yield self._serialize_chunk(
-                ChatCompletionChunk(
-                    id=completion_id,
-                    created=created,
-                    model=self.model_id,
-                    object="chat.completion.chunk",
-                    choices=[
-                        ChunkChoice(
-                            index=0,
-                            delta=ChoiceDelta(),
-                            finish_reason="stop",
-                        )
-                    ],
-                )
+        # 4. Flush remaining buffer
+        for trailing in buffer.flush():
+            yield self._build_chunk(
+                completion_id, created, ChoiceDelta(content=trailing)
             )
 
-    def _serialize_chunk(self, chunk: ChatCompletionChunk) -> str:
-        # Serialize Pydantic chunk to JSON string, formatted for SSE
-        chunk_json = chunk.model_dump_json()
-        return f"data: {chunk_json}\n\n"
+        # 5. Emit terminal chunk
+        if not buffer.emitted_call:
+            yield self._build_chunk(
+                completion_id, created, ChoiceDelta(), finish_reason="stop"
+            )
 
-    def _return_chunk_as_plain_text(
-        self, token: str, completion_id: str, created: int
-    ) -> str:
-
-        plain_text_chunk = ChatCompletionChunk(
+    def _build_chunk(
+        self,
+        completion_id: str,
+        created: int,
+        delta: ChoiceDelta,
+        finish_reason: str | None = None,
+    ) -> ChatCompletionChunk:
+        return ChatCompletionChunk(
             id=completion_id,
             created=created,
             model=self.model_id,
             object="chat.completion.chunk",
-            choices=[
-                ChunkChoice(
-                    index=0,
-                    delta=ChoiceDelta(content=token),
-                    finish_reason=None,
-                )
-            ],
+            choices=[ChunkChoice(index=0, delta=delta, finish_reason=finish_reason)],  # type: ignore
         )
-
-        return self._serialize_chunk(plain_text_chunk)
 
     def _yield_tool_call(
         self,
         call: ChatCompletionMessageToolCall,
         completion_id: str,
         created: int,
-    ) -> Generator[str, None, None]:
-        tool_call_announcement = ChatCompletionChunk(
-            id=completion_id,
-            created=created,
-            model=self.model_id,
-            object="chat.completion.chunk",
-            choices=[
-                ChunkChoice(
-                    index=0,
-                    delta=ChoiceDelta(
-                        role="assistant",
-                        tool_calls=[
-                            ChoiceDeltaToolCall(
-                                index=0,
-                                id=call.id,
-                                type="function",
-                                function=ChoiceDeltaToolCallFunction(
-                                    name=call.function.name,
-                                    arguments="",
-                                ),
-                            )
-                        ],
-                    ),
-                    finish_reason=None,
-                )
-            ],
+    ) -> Generator[ChatCompletionChunk, None, None]:
+        # Header / Name chunk
+        yield self._build_chunk(
+            completion_id,
+            created,
+            ChoiceDelta(
+                role="assistant",
+                tool_calls=[
+                    ChoiceDeltaToolCall(
+                        index=0,
+                        id=call.id,
+                        type="function",
+                        function=ChoiceDeltaToolCallFunction(
+                            name=call.function.name, arguments=""
+                        ),
+                    )
+                ],
+            ),
         )
-        tool_call_arguments = ChatCompletionChunk(
-            id=completion_id,
-            created=created,
-            model=self.model_id,
-            object="chat.completion.chunk",
-            choices=[
-                ChunkChoice(
-                    index=0,
-                    delta=ChoiceDelta(
-                        tool_calls=[
-                            ChoiceDeltaToolCall(
-                                index=0,
-                                function=ChoiceDeltaToolCallFunction(
-                                    arguments=call.function.arguments
-                                ),
-                            )
-                        ]
-                    ),
-                    finish_reason=None,
-                )
-            ],
+
+        # Body / Arguments chunk
+        yield self._build_chunk(
+            completion_id,
+            created,
+            ChoiceDelta(
+                tool_calls=[
+                    ChoiceDeltaToolCall(
+                        index=0,
+                        function=ChoiceDeltaToolCallFunction(
+                            arguments=call.function.arguments
+                        ),
+                    )
+                ]
+            ),
         )
-        terminate_tool_call = ChatCompletionChunk(
-            id=completion_id,
-            created=created,
-            model=self.model_id,
-            object="chat.completion.chunk",
-            choices=[
-                ChunkChoice(
-                    index=0,
-                    delta=ChoiceDelta(),
-                    finish_reason="tool_calls",
-                )
-            ],
+
+        # Terminal tool call finish reason chunk
+        yield self._build_chunk(
+            completion_id, created, ChoiceDelta(), finish_reason="tool_calls"
         )
-        yield self._serialize_chunk(tool_call_announcement)
-
-        yield self._serialize_chunk(tool_call_arguments)
-
-        yield self._serialize_chunk(terminate_tool_call)
-
-    def _message_check_contents_for_target_fragment(
-        self, target: str, message: str
-    ) -> tuple[int, int] | None:
-        if not message or not target:
-            return None
-
-        # Step 1: Check for complete occurrence anywhere in message
-        target_len = len(target)
-        for i in range(len(message) - target_len + 1):
-            if message[i : i + target_len] == target:
-                return (i, i + target_len)
-
-        # Step 2: Check if the tail of message matches a prefix of target (no chars after)
-        max_overlap = min(len(message), target_len - 1)
-        for length in range(max_overlap, 0, -1):
-            start = len(message) - length
-            if message[start:] == target[:length]:
-                return (start, len(message))
-
-        return None
