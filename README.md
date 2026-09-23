@@ -55,19 +55,13 @@ uv run polylogue-cli db save
     -p /path/to/model            # OR --path
     -n 128_000                   # OR --n-ctx
     -d "helpful description..."  # OR --description
-
+# OR
 uv run polylogue-cli save -m model_id -p /path/to/model -n 128_000 -d "helpful description..."
-```
 
-### List all ModelRecords
-
-```bash
+# List all ModelRecords
 uv run polylogue-cli db list
-```
 
-### Delete a ModelRecord
-
-```bash
+# Delete a ModelRecord
 uv run polylogue-cli db delete -m model_id
 ```
 
@@ -94,33 +88,20 @@ The complete secret key (e.g., sk_live_...) is displayed only once upon creation
 ### Get API Key Metadata
 
 ```bash
-uv run polylogue-cli api get -k sk_live_key_id # OR --key-id
-```
+uv run polylogue-cli api get --key-id sk_live_key_id # 
 
-### Verify an API Key
-
-```bash
+# Verify an API Key
 uv run polylogue-cli api verify sk_live_key_id_secret_token
-```
 
-### List API Keys by Owner
+# List API Keys by Owner
+uv run polylogue-cli api list --owner-id owner_id
 
-```bash
-uv run polylogue-cli api list -o owner_id # OR --owner-id
-```
-
-### List All Owners
-
-```bash
+# List All Owners
 uv run polylogue-cli api list-owners
+
+# Delete an API Key
+uv run polylogue-cli api delete --key-id sk_live_key_id # OR 
 ```
-
-### Delete an API Key
-
-```bash
-uv run polylogue-cli api delete -k sk_live_key_id # OR --key-id
-```
-
 
 ### Help
 
