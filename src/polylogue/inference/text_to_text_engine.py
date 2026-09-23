@@ -6,7 +6,7 @@ import time
 import uuid
 from collections.abc import AsyncGenerator, Generator, Sequence
 from concurrent.futures import ThreadPoolExecutor
-from typing import final
+from typing import Any, final
 
 from fastapi import Request
 from openai.types.chat import (
@@ -30,7 +30,10 @@ from openai.types.chat.chat_completion_message_tool_call import (
     Function,
 )
 
-from polylogue.inference.chat_templates.chat_template import ChatTemplateConstants
+from polylogue.inference.chat_templates.chat_template import (
+    ChatTemplateConstants,
+    ChatTemplateDetector,
+)
 from polylogue.inference.helpers.message_list import MessageList
 from polylogue.inference.helpers.stream_tool_buffer import StreamToolCallBuffer
 from polylogue.inference.helpers.tool_call_parser import ToolCallParser
@@ -185,6 +188,7 @@ class TextToTextEngine:
             chunk_stream = self._transform_stream(raw_stream, tools, stop_event)
 
             for chunk in chunk_stream:
+                # print(chunk.choices[0].finish_reason)
                 if stop_event.is_set():
                     break
                 loop.call_soon_threadsafe(queue.put_nowait, chunk)
@@ -211,14 +215,15 @@ class TextToTextEngine:
 
             delta = chunk.choices[0].delta
 
+            # print(delta.content, end="", flush=False)
+
             # 1. Native pass-through
             if delta.tool_calls:
-                buffer.emitted_call = True
                 yield chunk
                 continue
 
             token = delta.content or ""
-            if not token:
+            if delta.content is None:
                 continue
 
             # 2. Passthrough if no tools registered
@@ -238,17 +243,15 @@ class TextToTextEngine:
                     for call in event:
                         yield from self._yield_tool_call(call, completion_id, created)
 
-        # 4. Flush remaining buffer
-        for trailing in buffer.flush():
-            yield self._build_chunk(
-                completion_id, created, ChoiceDelta(content=trailing)
-            )
-
-        # 5. Emit terminal chunk
-        if not buffer.emitted_call:
-            yield self._build_chunk(
-                completion_id, created, ChoiceDelta(), finish_reason="stop"
-            )
+        # 4. Emit terminal chunk
+        for event in buffer.flush():
+            if isinstance(event, str):
+                yield self._build_chunk(
+                    completion_id, created, ChoiceDelta(content=event)
+                )
+            elif isinstance(event, list):
+                for call in event:
+                    yield from self._yield_tool_call(call, completion_id, created)
 
     def _build_chunk(
         self,

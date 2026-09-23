@@ -20,47 +20,59 @@ class ToolCallFormat(str, Enum):
 
 
 class Delimiters:
-    # Universal / XML (Hermes, Qwen, ChatML)
-    XML_TOOL_CALL_START = "<tool_call>"
-    XML_TOOL_CALL_END = "</tool_call>"
+    # Standard XML / Hermes
+    XML_TOOL_CALL_START: str = "<tool_call>"
+    XML_TOOL_CALL_END: str = "</tool_call>"
+    XML_TOOL_RESPONSE_START: str = "<tool_response>"
+    XML_TOOL_RESPONSE_END: str = "</tool_response>"
 
-    # Gemma Delimiters
-    GEMMA_START_OF_TURN = "<start_of_turn>"
-    GEMMA_END_OF_TURN = "<end_of_turn>"
-    GEMMA_TOOL_CALL_START = "<|tool_call>"
-    GEMMA_TOOL_CALL_END = "<tool_call|>"
-    GEMMA_QUOTE_ESCAPE = '<|"|>'
-    GEMMA_CALL_PREFIX = "call:"
+    # ChatML
+    CHATML_IM_START: str = "<|im_start|>"
+    CHATML_IM_END: str = "<|im_end|>"
 
-    # Llama 3 Delimiters
-    LLAMA_HEADER_START = "<|start_header_id|>"
-    LLAMA_HEADER_END = "<|end_header_id|>"
-    LLAMA_EOT_ID = "<|eot_id|>"
-    LLAMA_EOM_ID = "<|eom_id|>"
-    LLAMA_PYTHON_TAG = "<|python_tag|>"
+    # Llama 3.x
+    LLAMA_HEADER_START: str = "<|start_header_id|>"
+    LLAMA_HEADER_END: str = "<|end_header_id|>"
+    LLAMA_EOT_ID: str = "<|eot_id|>"
+    LLAMA_EOM_ID: str = "<|eom_id|>"
+    LLAMA_PYTHON_TAG: str = "<|python_tag|>"
+    LLAMA_IPYTHON_START: str = "<|start_header_id|>ipython<|end_header_id|>\n\n"
 
-    # ChatML Delimiters
-    CHATML_IM_START = "<|im_start|>"
-    CHATML_IM_END = "<|im_end|>"
+    # Gemma / Gemma 4
+    GEMMA_START_OF_TURN: str = "<start_of_turn>"
+    GEMMA_END_OF_TURN: str = "<end_of_turn>"
+    GEMMA_CALL_PREFIX: str = "call:"
+    GEMMA_QUOTE_ESCAPE: str = '<|\\"|>'
+    GEMMA_TOOL_CALL_START: str = "<|tool_call>"
+    GEMMA_TOOL_CALL_END: str = "<tool_call|>"
+    GEMMA_TOOL_RESPONSE_START: str = "<|tool_response>"
+    GEMMA_TOOL_RESPONSE_END: str = "<tool_response|>"
+    GEMMA_CHANNEL_START: str = "<|channel>"
+    GEMMA_CHANNEL_END: str = "<channel|>"
+    GEMMA_THINK_START: str = "<|channel>thought\n"
+    GEMMA_THINK_END: str = "<channel|>"
 
-    # Mistral Delimiters
-    MISTRAL_TOOL_START = "[TOOL_CALLS]"
-    MISTRAL_TOOL_END = "[/TOOL_CALLS]"
+    # Mistral / Mixtral
+    MISTRAL_TOOL_START: str = "[TOOL_CALLS]"
+    MISTRAL_TOOL_END: str = ""
+    MISTRAL_TOOL_RESPONSE_START: str = "[TOOL_RESULTS]"
+    MISTRAL_TOOL_RESPONSE_END: str = "[/TOOL_RESULTS]"
 
-    # DeepSeek Delimiters
-    DEEPSEEK_TOOL_START = "<｜tool call begin｜>"
-    DEEPSEEK_TOOL_END = "<｜tool call end｜>"
-    DEEPSEEK_TOOLS_WRAP_START = "<｜tool calls begin｜>"
-    DEEPSEEK_TOOLS_WRAP_END = "<｜tool calls end｜>"
-    DEEPSEEK_USER = "<｜User｜>"
-    DEEPSEEK_ASSISTANT = "<｜Assistant｜>"
-    DEEPSEEK_EOS = "<｜end of sentence｜>"
+    # DeepSeek
+    DEEPSEEK_USER: str = "<｜User｜>"
+    DEEPSEEK_ASSISTANT: str = "<｜Assistant｜>"
+    DEEPSEEK_EOS: str = "<｜end of sentence｜>"
+    DEEPSEEK_TOOL_START: str = "<｜tool calls｜>"
+    DEEPSEEK_TOOL_END: str = "<｜end of tool calls｜>"
+    DEEPSEEK_TOOLS_WRAP_START: str = "<｜tool call begin｜>"
+    DEEPSEEK_TOOL_RESPONSE_START: str = "<｜tool outputs｜>"
+    DEEPSEEK_TOOL_RESPONSE_END: str = "<｜end of tool outputs｜>"
 
-    # Thinking / Reasoning Delimiters
-    THINK_START = "<think>"
-    THINK_END = "</think>"
-    THOUGHT_START = "<thought>"
-    THOUGHT_END = "</thought>"
+    # Generic Reasoning Delimiters
+    THINK_START: str = "<think>"
+    THINK_END: str = "</think>"
+    THOUGHT_START: str = "<thought>"
+    THOUGHT_END: str = "</thought>"
 
 
 class Patterns:

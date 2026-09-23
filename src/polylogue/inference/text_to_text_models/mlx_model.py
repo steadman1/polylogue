@@ -56,7 +56,7 @@ class MLXModel:
         mx.set_default_device(mx.gpu)
 
         self.model, self.tokenizer = load(str(self.model_path))  # type: ignore
-        self.constants = ChatTemplateDetector.from_tokenizer(self.tokenizer)
+        self.constants = ChatTemplateDetector.from_model_dir(self.model_path)
 
         mx.eval(self.model.parameters())
         mx.synchronize()
@@ -122,6 +122,8 @@ class MLXModel:
         )
 
         id_str, _ = self._get_id_and_created()
+
+        print("WHAT THE MODELS SEES ======== " + prompt)
 
         prompt_cache = make_prompt_cache(self.model)
         stream = stream_generate(

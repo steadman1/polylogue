@@ -11,7 +11,7 @@ from polylogue.inference.helpers.tool_call_parser import ToolCallParser
 
 
 class StreamToolCallBuffer:
-    """Manages token buffering and extracts tool invocations on partial stream streams."""
+    """Manages token buffering and extracts tool invocations on partial stream chunks."""
 
     def __init__(self, constants: ChatTemplateConstants) -> None:
         self.constants = constants
@@ -19,90 +19,93 @@ class StreamToolCallBuffer:
         self.end_tag = constants.tool_call_end
         self.format = constants.tool_format
 
-        self.tag_buffer = ""
+        self.buffer = ""
         self.tool_content = ""
         self.is_active = False
-        self.emitted_call = False
 
     def process_token(
         self, token: str
     ) -> Generator[str | list[ChatCompletionMessageToolCall], None, None]:
-        """
-        Consumes an incoming text chunk and yields either:
-        - Plaintext string segments (outside tool call envelope)
-        - list[ChatCompletionMessageToolCall] when a tool call has fully terminated
-        """
-        combined = self.tag_buffer + token
+        self.buffer += token
 
-        if not self.is_active:
-            # 1. Searching for opening delimiter
-            match = self._find_target_or_prefix(self.start_tag, combined)
-            if not match:
-                yield combined
-                self.tag_buffer = ""
-                return
+        while self.buffer:
+            if not self.is_active:
+                # Check for complete start_tag
+                start_idx = self.buffer.find(self.start_tag)
+                if start_idx != -1:
+                    # Yield any text leading up to start_tag
+                    text_before = self.buffer[:start_idx]
+                    if text_before:
+                        yield text_before
 
-            start_idx, end_idx = match
-            prefix_text = combined[:start_idx]
-            if prefix_text:
-                yield prefix_text
+                    self.is_active = True
+                    self.tool_content = ""
+                    # Advance buffer past start_tag
+                    self.buffer = self.buffer[start_idx + len(self.start_tag) :]
+                    continue
 
-            matched_fragment = combined[start_idx:end_idx]
-            if matched_fragment == self.start_tag:
-                self.is_active = True
-                self.tag_buffer = ""
-                self.tool_content = matched_fragment
+                # Check for possible partial start_tag at tail of buffer
+                partial_len = self._get_partial_match_len(self.buffer, self.start_tag)
+                if partial_len > 0:
+                    # Yield characters confirmed not to belong to start_tag
+                    safe_text = self.buffer[:-partial_len]
+                    if safe_text:
+                        yield safe_text
+                    self.buffer = self.buffer[-partial_len:]
+                    break
+                else:
+                    yield self.buffer
+                    self.buffer = ""
+
             else:
-                self.tag_buffer = matched_fragment
+                # Check for complete end_tag
+                end_idx = self.buffer.find(self.end_tag)
+                if end_idx != -1:
+                    # Accumulate tool payload
+                    self.tool_content += self.buffer[:end_idx]
+                    self.buffer = self.buffer[end_idx + len(self.end_tag) :]
+                    self.is_active = False
 
-        else:
-            # 2. Searching for closing delimiter
-            match = self._find_target_or_prefix(self.end_tag, combined)
-            if not match:
-                self.tool_content += combined
-                self.tag_buffer = ""
-                return
+                    # Parse extracted payload
+                    calls = ToolCallParser.parse_payload(self.tool_content, self.format)
 
-            start_idx, end_idx = match
-            matched_fragment = combined[start_idx:end_idx]
+                    if calls:
+                        yield calls
+                    self.tool_content = ""
+                    continue
 
-            if matched_fragment == self.end_tag:
-                self.tool_content += combined[:start_idx] + self.end_tag
-                _, calls = ToolCallParser.parse(self.tool_content, self.format)
-                if calls:
-                    self.emitted_call = True
-                    yield calls
+                # Check for possible partial end_tag at tail of buffer
+                partial_len = self._get_partial_match_len(self.buffer, self.end_tag)
+                if partial_len > 0:
+                    self.tool_content += self.buffer[:-partial_len]
+                    self.buffer = self.buffer[-partial_len:]
+                    break
+                else:
+                    self.tool_content += self.buffer
+                    self.buffer = ""
 
-                # Reset state for possible subsequent calls or plain output
-                self.tool_content = ""
-                self.tag_buffer = ""
-                self.is_active = False
-            else:
-                self.tool_content += combined[:start_idx]
-                self.tag_buffer = matched_fragment
-
-    def flush(self) -> Generator[str, None, None]:
+    def flush(self) -> Generator[str | list[ChatCompletionMessageToolCall], None, None]:
         """Flushes trailing buffer data on stream completion."""
-        trailing = self.tag_buffer or (
-            self.tool_content if not self.emitted_call else ""
-        )
-        if trailing and not self.emitted_call:
-            yield trailing
+        if self.is_active:
+            # Stream ended before closing tag: attempt fallback parse or emit raw
+            self.tool_content += self.buffer
+
+            calls = ToolCallParser.parse_payload(self.tool_content, self.format)
+            if calls:
+                yield calls
+            else:
+                yield self.start_tag + self.tool_content
+            self.tool_content = ""
+            self.buffer = ""
+        else:
+            if self.buffer:
+                yield self.buffer
+                self.buffer = ""
 
     @staticmethod
-    def _find_target_or_prefix(target: str, text: str) -> tuple[int, int] | None:
-        if not text or not target:
-            return None
-
-        # Full occurrence match
-        idx = text.find(target)
-        if idx != -1:
-            return (idx, idx + len(target))
-
-        # Partial tail overlap match (e.g. text ends with '<tool')
+    def _get_partial_match_len(text: str, target: str) -> int:
         max_overlap = min(len(text), len(target) - 1)
         for length in range(max_overlap, 0, -1):
             if text.endswith(target[:length]):
-                return (len(text) - length, len(text))
-
-        return None
+                return length
+        return 0
